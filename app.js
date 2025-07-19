@@ -120,6 +120,7 @@ app.get("/", (req, res) => {
   res.redirect("/listings");
 });
 
+
 app.get("/listings",listingcontroller.index);
 app.get("/signup",(req,res)=>{
   res.render("user/signup");
