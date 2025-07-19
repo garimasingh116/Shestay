@@ -1,0 +1,89 @@
+<% layout("/layouts/boilerplate") %>
+
+<body class="bg-light">
+  <div class="container my-5">
+    <h2 class="text-center text-primary mb-4">Edit Listing</h2>
+
+    <form method="POST" action="/listings/<%= listing._id %>?_method=PUT" class="p-4 rounded shadow bg-white"
+      enctype="multipart/form-data">
+
+      <div class="mb-3">
+        <label class="form-label">Title</label>
+        <input name="listing[title]" value="<%= listing.title %>" class="form-control" required>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Description</label>
+        <textarea name="listing[description]" class="form-control" rows="3" required><%= listing.description %></textarea>
+      </div>
+<div class="mb-3">
+  <label class="form-label fw-bold">Previous Image</label>
+  <div class="border rounded p-2 bg-light text-center">
+    <img src="<%= originalimage %>" class="img-fluid rounded shadow-sm" style="max-height: 250px;" alt="Previous Image"/>
+  </div>
+</div>
+
+
+      <div class="mb-3">
+        <label class="form-label">Image URL</label>
+        <input name="listing[image]"type="file" value="<%= listing.image %>" class="form-control">
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Price (₹)</label>
+        <input type="number" name="listing[price]" value="<%= listing.price %>" class="form-control" required>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Location</label>
+        <input name="listing[location]" value="<%= listing.location %>" class="form-control" required>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Country</label>
+        <input name="listing[country]" value="<%= listing.country %>" class="form-control" required>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Women Only?</label>
+        <select name="listing[isWomenOnly]" class="form-select">
+          <option value="true" <%= listing.isWomenOnly ? "selected" : "" %>>Yes</option>
+          <option value="false" <%= !listing.isWomenOnly ? "selected" : "" %>>No</option>
+        </select>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Host Gender</label>
+        <select name="listing[hostGender]" class="form-select">
+          <option value="female" <%= listing.hostGender === "female" ? "selected" : "" %>>Female</option>
+          <option value="male" <%= listing.hostGender === "male" ? "selected" : "" %>>Male</option>
+        </select>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Has Secure Lock?</label>
+        <select name="listing[hasSecureLock]" class="form-select">
+          <option value="true" <%= listing.hasSecureLock ? "selected" : "" %>>Yes</option>
+          <option value="false" <%= !listing.hasSecureLock ? "selected" : "" %>>No</option>
+        </select>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Emergency Support?</label>
+        <select name="listing[emergencySupport]" class="form-select">
+          <option value="true" <%= listing.emergencySupport ? "selected" : "" %>>Yes</option>
+          <option value="false" <%= !listing.emergencySupport ? "selected" : "" %>>No</option>
+        </select>
+      </div>
+
+      <div class="mb-4">
+        <label class="form-label">Safety Rating (out of 5)</label>
+        <input type="number" step="0.1" min="0" max="5" name="listing[safetyRating]" value="<%= listing.safetyRating %>" class="form-control">
+      </div>
+
+      <div class="text-center">
+        <button type="submit" class="btn btn-success">Update Listing</button>
+      </div>
+    </form>
+  </div>
+</body>
