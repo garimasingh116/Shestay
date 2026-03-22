@@ -33,7 +33,11 @@ const listingcontroller=require("./controllers/listing.js")
 // const MONGO_URL="mongodb://127.0.0.1:27017/shestay";
 const dburl=process.env.ATLAS_DB
 async function main() {
-    await mongoose.connect(dburl);
+  await mongoose.connect(dburl, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    tls: true,
+  });
 }
 main().then(() =>{
     console.log("connected with db");
@@ -41,16 +45,19 @@ main().then(() =>{
 }).catch((err)=>{
     console.log(err);
 })
-const store=MongoStore.create(
-  {
-    mongoUrl:dburl,
-    crypto: {
-    secret:process.env.SECRET
-  },
-  touchAfter:24*3600
 
-  }
-)
+    const store = MongoStore.create({
+      mongoUrl: dburl,
+      mongoOptions: {
+        tls: true,
+      },
+      crypto: {
+        secret: process.env.SECRET,
+      },
+      touchAfter: 24 * 3600,
+    });
+
+
 store.on("error",()=>{
   console.log("error",err);
 })
