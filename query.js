@@ -2,132 +2,79 @@ require("dotenv").config();
 
 const {
   HuggingFaceTransformersEmbeddings
-} = require(
-  "@langchain/community/embeddings/huggingface_transformers"
-);
+} = require("@langchain/community/embeddings/huggingface_transformers");
 
 const {
   Pinecone
 } = require("@pinecone-database/pinecone");
 
-const Groq =
-require("groq-sdk");
+const Groq = require("groq-sdk");
 
-const groq =
-  new Groq({
-    apiKey:
-      process.env.GROQ_API_KEY,
-  });
+// GROQ SETUP
+const groq = new Groq({
+  apiKey: process.env.GROQ_API_KEY,
+});
 
+// CHAT HISTORY
 const History = [];
 
-async function transformQuery(question){
+// MAIN CHAT FUNCTION
+async function chatting(question) {
 
-  History.push({
-    role: 'user',
-    content: question
-  });
+  try {
 
-  const response =
-    await groq.chat.completions.create({
+    // CLEAN QUERY
+    const queries = question.toLowerCase().trim();
 
-      messages: [
-
-        {
-          role: "system",
-          content: `
-Rewrite the user's latest question
-into a standalone question.
-Only return the rewritten question.
-          `,
-        },
-
-        ...History
-
-      ],
-
-      model: "llama-3.1-8b-instant",
-
-    });
-
-  History.pop();
-
-  return response
-    .choices[0]
-    .message
-    .content;
-}
-
-async function askAI(question){
-
-  try{
-
-    // REWRITE QUERY
-
-    const queries =
-      await transformQuery(question);
+    console.log("\nUser Query:");
+    console.log(queries);
 
     // EMBEDDINGS
-
     const embeddings =
       new HuggingFaceTransformersEmbeddings({
-        model:
-          "Xenova/all-MiniLM-L6-v2",
+        model: "Xenova/all-MiniLM-L6-v2",
       });
 
     // QUERY VECTOR
-
     const queryVector =
-      await embeddings.embedQuery(
-        queries
-      );
+      await embeddings.embedQuery(queries);
 
-    // PINECONE
+    // PINECONE CONNECTION
+    const pinecone = new Pinecone({
+      apiKey: process.env.PINECONE_API_KEY,
+    });
 
-    const pinecone =
-      new Pinecone({
-        apiKey:
-          process.env.PINECONE_API_KEY,
-      });
-
+    // PINECONE INDEX
     const pineconeIndex =
       pinecone
-        .Index(
-          process.env.PINECONE_INDEX_NAME
-        )
+        .Index(process.env.PINECONE_INDEX_NAME)
         .namespace("default");
 
-    // SEARCH
-
+    // VECTOR SEARCH
     const searchResults =
       await pineconeIndex.query({
-
-        topK: 5,
-
+        topK: 8,
         vector: queryVector,
-
         includeMetadata: true,
-
       });
 
-    // CONTEXT
+    console.log(
+      "\nSearch Results Found:",
+      searchResults.matches.length
+    );
 
-    const context =
-      searchResults.matches
-        .map(match =>
-          match.metadata.text
-        )
-        .join("\n\n---\n\n");
+    // CREATE CONTEXT
+    const context = searchResults.matches
+      .map(match => match.metadata.text)
+      .join("\n\n---\n\n");
 
-    // SAVE USER QUERY
-
+    // SAVE USER MESSAGE
     History.push({
       role: 'user',
       content: queries
     });
 
-    // FINAL ANSWER
-
+    // FINAL ANSWER GENERATION
     const response =
       await groq.chat.completions.create({
 
@@ -136,16 +83,55 @@ async function askAI(question){
           {
             role: "system",
             content: `
-You are SheStay AI.
+ 
+You are SheStay AI — a smart, friendly, and trustworthy assistant designed to help women discover safe, comfortable, and reliable stays across India.
 
-Answer ONLY from context.
+Your role is to guide users in finding women-friendly accommodations based on the information available in the provided context.
+
+The listings may include:
+- women-only villas
+- secure hostels
+- luxury stays
+- solo women travel accommodations
+- gated properties
+- late-night check-in support
+- CCTV-enabled stays
+- female staff availability
+- emergency support services
+- safety ratings
+- city and location details
+- nearby transport and police accessibility
+
+Behavior Guidelines:
+- Answer ONLY using the provided context.
+- Never create or assume information that is not present.
+- Keep responses natural, warm, professional, and easy to understand.
+- Make users feel safe, supported, and welcomed.
+- Highlight important safety features whenever relevant.
+- If a user asks about a specific city or property, provide concise but informative details.
+- If multiple properties match the request, compare them briefly in a clean and readable way.
+- Prioritize information related to:
+  - women’s safety
+  - secure surroundings
+  - female staff
+  - gated security
+  - CCTV surveillance
+  - emergency assistance
+  - late-night accessibility
+- If the requested information is unavailable in the current context, politely explain that it is not available in the current SheStay listings.
+- Avoid overly robotic answers.
+- Keep answers informative but not too lengthy.
+- Maintain a premium, caring, and trustworthy tone.
 
 Context:
 ${context}
-            `,
+`,
           },
 
-          ...History
+          {
+            role: "user",
+            content: queries
+          }
 
         ],
 
@@ -153,30 +139,23 @@ ${context}
 
       });
 
-    const finalAnswer =
-      response
-        .choices[0]
-        .message
-        .content;
+    // FINAL ANSWER
+    const answer =
+      response.choices[0].message.content;
 
-    // SAVE HISTORY
+    console.log("\nAI Response:\n");
+    console.log(answer);
 
-    History.push({
-      role: 'assistant',
-      content: finalAnswer
-    });
+    return answer;
 
-    return finalAnswer;
-
-  }
-  catch(err){
+  } catch (err) {
 
     console.log(err);
 
-    return "Something went wrong. Please try again.";
+    return "AI failed";
 
   }
 
 }
 
-module.exports = { askAI };
+module.exports = chatting;
