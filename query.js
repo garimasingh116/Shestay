@@ -173,7 +173,7 @@ ${context}
 
     console.log(err);
 
-    return "Something went wrong.";
+    return "Something went wrong. Please try again.";
 
   }
 
