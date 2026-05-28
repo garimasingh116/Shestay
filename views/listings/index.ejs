@@ -1,6 +1,7 @@
 <% layout("/layouts/boilerplate") %>
 
 <style>
+
   #filters {
     display: flex;
     flex-wrap: wrap;
@@ -23,6 +24,7 @@
   .filter:hover {
     opacity: 1;
     cursor: pointer;
+    transform: scale(1.05);
   }
 
   .filter i {
@@ -37,78 +39,373 @@
   #tax-info {
     font-size: 0.85rem;
     color: #6c757d;
+    display: none;
   }
+
+  .listing-card {
+    transition: transform 0.2s ease;
+    border-radius: 15px;
+    overflow: hidden;
+  }
+
+  .listing-card:hover {
+    transform: translateY(-5px);
+  }
+
+  .ai-card {
+    background: linear-gradient(
+      135deg,
+      #6f42c1,
+      #8e44ad
+    );
+
+    border-radius: 25px;
+  }
+
 </style>
 
 <%= success %>
 
 <body>
-  <!-- Filter bar -->
+
+  <!-- FILTER BAR -->
+
   <div id="filters" class="shadow-sm">
+
     <div class="filter">
       <div><i class="fa-solid fa-fire"></i></div>
       <p>Trending</p>
     </div>
+
     <div class="filter">
       <div><i class="fa-solid fa-bed"></i></div>
       <p>Rooms</p>
     </div>
+
     <div class="filter">
       <div><i class="fa-solid fa-mountain-sun"></i></div>
       <p>Iconic Cities</p>
     </div>
+
     <div class="filter">
       <div><i class="fa-solid fa-person-swimming"></i></div>
       <p>Amazing Pools</p>
     </div>
+
     <div class="filter">
       <div><i class="fa-solid fa-chess-rook"></i></div>
       <p>Castle</p>
     </div>
+
     <div class="filter">
       <div><i class="fa-solid fa-cow"></i></div>
       <p>Farms</p>
     </div>
+
     <div class="filter">
       <div><i class="fa-solid fa-tents"></i></div>
       <p>Camping</p>
     </div>
 
+    <!-- TAX SWITCH -->
+
     <div class="form-check form-switch d-flex align-items-center ms-3">
-      <input class="form-check-input" type="checkbox" role="switch" id="switchCheckDefault">
-      <label class="form-check-label ms-2 text-muted" for="switchCheckDefault">Show tax</label>
+
+      <input
+        class="form-check-input"
+        type="checkbox"
+        role="switch"
+        id="switchCheckDefault"
+      >
+
+      <label
+        class="form-check-label ms-2 text-muted"
+        for="switchCheckDefault"
+      >
+
+        Show tax
+
+      </label>
+
     </div>
+
   </div>
 
-  <!-- Listings -->
-  <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mt-3 justify-content-center">
-    <% for(let listing of allListing){ %>
-      <div class="col">
-        <a href="/listings/<%=listing._id %>" class="text-decoration-none text-dark">
-          <div class="card h-100 shadow-sm">
-            <img class="card-img-top" src="<%= listing.image.url %>" alt="listing_image">
-            <div class="card-body">
-              <p class="card-text mb-1 fw-semibold">
-                <%= listing.title %> – ₹<%= listing.price %>
-                <span id="tax-info"> &nbsp;+18% GST</span>
-              </p>
-              <% if (listing.femaleSafe === true || listing.femaleSafe === "true") { %>
-                <span class="badge bg-success">Female-safe</span>
-              <% } %>
-            </div>
-          </div>
-        </a>
-      </div>
-    <% } %>
+  <!-- AI BUTTON SECTION -->
+
+  <!-- AI CTA SECTION -->
+
+<div class="container mt-4">
+
+  <div
+    class="
+      d-flex
+      justify-content-between
+      align-items-center
+      flex-wrap
+      p-4
+      shadow-sm
+    "
+    style="
+      background: #fff;
+      border-radius: 18px;
+      border: 1px solid #eee;
+    "
+  >
+
+    <!-- LEFT -->
+
+    <div>
+
+      <h3
+        class="fw-bold mb-2"
+        style="color:#6f42c1;"
+      >
+
+        SheStay AI
+
+      </h3>
+
+      <p
+        class="text-muted mb-0"
+        style="max-width:500px;"
+      >
+
+        Find safe stays for women travelers with
+        AI-powered recommendations and safety insights.
+
+      </p>
+
+    </div>
+
+    <!-- RIGHT -->
+
+    <div class="mt-3 mt-md-0">
+
+      <a
+        href="/ai"
+        class="btn btn-dark px-4 py-2 rounded-pill"
+      >
+
+        <i class="fa-solid fa-robot me-2"></i>
+
+        Ask AI
+
+      </a>
+
+    </div>
+
   </div>
+
+</div>
+
+        <!-- QUICK TAGS -->
+
+        <div
+          class="
+            d-flex
+            flex-wrap
+            justify-content-center
+            gap-2
+            mt-4
+          "
+        >
+
+          <span class="badge bg-light text-dark p-2">
+            Solo Women Friendly
+          </span>
+
+          <span class="badge bg-light text-dark p-2">
+            Late Night Safe
+          </span>
+
+          <span class="badge bg-light text-dark p-2">
+            AI Safety Analysis
+          </span>
+
+          <span class="badge bg-light text-dark p-2">
+            Women-only Stays
+          </span>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- LISTINGS SECTION -->
+
+  <div
+    class="
+      row
+      row-cols-1
+      row-cols-md-2
+      row-cols-lg-3
+      g-4
+      mt-4
+      justify-content-center
+    "
+  >
+
+    <% for(let listing of allListing){ %>
+
+      <div class="col">
+
+        <a
+          href="/listings/<%= listing._id %>"
+          class="text-decoration-none text-dark"
+        >
+
+          <div class="card h-100 shadow-sm listing-card">
+
+            <!-- IMAGE -->
+
+            <img
+              class="card-img-top"
+              src="<%= listing.image.url %>"
+              alt="listing_image"
+            >
+
+            <!-- CARD BODY -->
+
+            <div class="card-body">
+
+              <h5 class="card-title fw-bold">
+
+                <%= listing.title %>
+
+              </h5>
+
+              <p class="text-muted mb-2">
+
+                <i class="fa-solid fa-location-dot me-1"></i>
+
+                <%= listing.location %>,
+                <%= listing.country %>
+
+              </p>
+
+              <p class="card-text fw-semibold">
+
+                ₹<%= listing.price %>
+
+                <span id="tax-info">
+
+                  &nbsp;+18% GST
+
+                </span>
+
+              </p>
+
+              <!-- SAFETY BADGES -->
+
+              <div class="d-flex flex-wrap gap-2 mt-3">
+
+                <% if (listing.isWomenOnly) { %>
+
+                  <span class="badge bg-danger">
+                    Women Only
+                  </span>
+
+                <% } %>
+
+                <% if (listing.security24x7) { %>
+
+                  <span class="badge bg-success">
+                    24/7 Security
+                  </span>
+
+                <% } %>
+
+                <% if (listing.hasCCTV) { %>
+
+                  <span class="badge bg-primary">
+                    CCTV
+                  </span>
+
+                <% } %>
+
+                <% if (listing.lateNightCheckin) { %>
+
+                  <span class="badge bg-warning text-dark">
+                    Late Night Check-in
+                  </span>
+
+                <% } %>
+
+              </div>
+
+              <!-- SAFETY SCORE -->
+
+              <% if (listing.safetyRating) { %>
+
+                <div class="mt-3">
+
+                  <small class="fw-semibold">
+
+                    Safety Rating
+
+                  </small>
+
+                  <div class="progress mt-1">
+
+                    <div
+                      class="progress-bar bg-success"
+                      role="progressbar"
+                      style="
+                        width:
+                        <%= listing.safetyRating * 20 %>%
+                      "
+                    >
+
+                      <%= listing.safetyRating %>/5
+
+                    </div>
+
+                  </div>
+
+                </div>
+
+              <% } %>
+
+            </div>
+
+          </div>
+
+        </a>
+
+      </div>
+
+    <% } %>
+
+  </div>
+
 </body>
 
+<!-- TAX TOGGLE SCRIPT -->
+
 <script>
-  const taxSwitch = document.getElementById("switchCheckDefault");
+
+  const taxSwitch =
+    document.getElementById("switchCheckDefault");
+
   taxSwitch.addEventListener("click", () => {
-    const taxInfoElements = document.querySelectorAll("#tax-info");
+
+    const taxInfoElements =
+      document.querySelectorAll("#tax-info");
+
     for (let el of taxInfoElements) {
-      el.style.display = (el.style.display === "none" || el.style.display === "") ? "inline" : "none";
+
+      el.style.display =
+        (el.style.display === "none" ||
+         el.style.display === "")
+          ? "inline"
+          : "none";
+
     }
+
   });
+
 </script>

@@ -1,11 +1,13 @@
 if(process.env.NODE_ENV !="production"){
   require("dotenv").config()
 }
+const { askAI } = require("./query");
 require('dotenv').config()
 console.log(process.env.SECRET)
 const express=require("express");
 const app=express();
 app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
 
 const mongoose=require("mongoose");
 const Listing=require("./models/listing.js")
@@ -123,8 +125,45 @@ app.listen(8080,()=>{
 //   }
 // });
 //index route
+app.post("/ai/search", async(req,res)=>{
+
+  try{
+
+    console.log("ROUTE HIT");
+
+    const { query } = req.body;
+
+    console.log("QUERY:", query);
+
+    const answer =
+      await askAI(query);
+
+    console.log("ANSWER:", answer);
+
+    res.json({
+      answer
+    });
+
+  }
+  catch(err){
+
+    console.log(err);
+
+    res.status(500).json({
+      answer:"Backend crashed"
+    });
+
+  }
+
+});
+app.get("/test",(req,res)=>{
+  res.send("TEST WORKING");
+});
 app.get("/", (req, res) => {
   res.redirect("/listings");
+});
+app.get("/ai",(req,res)=>{
+  res.render("listings/ai");
 });
 
 
@@ -312,6 +351,10 @@ app.post("/login",saveRedirectUrl,
   res.redirect(redirectUrl);
 
 })
+app.get("/gungun",(req,res)=>{
+  res.send("hello gungun")
+})
+
 app.get("/logout",(req,res,next)=>{
   req.logout((err)=>{
     if(err){

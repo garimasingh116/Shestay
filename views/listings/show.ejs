@@ -1,107 +1,424 @@
 <% layout("/layouts/boilerplate") %>
 
 <body class="bg-light">
+
   <div class="container my-5">
-    <h3 class="mb-4 text-center text-primary">Listing Details</h3>
+
+    <h3 class="mb-4 text-center text-primary">
+      Listing Details
+    </h3>
 
     <div class="card shadow">
+
       <div class="card-body">
+
         <ul class="list-group list-group-flush">
-          <li class="list-group-item"><strong>Title:</strong> <%= listing.title %></li>
-          <% if (listing.owner) { %>
-            <li><i><%= listing.owner.username %></i></li>
-          <% } %>
-          <li class="list-group-item"><strong>Description:</strong> <%= listing.description %></li>
+
           <li class="list-group-item">
-            <strong>Image:</strong><br>
-            <% if (listing.image && listing.image.url) { %>
-              <img src="<%= listing.image.url %>" class="img-fluid rounded" style="max-height: 300px;">
-            <% } else { %>
-              <p>No image uploaded.</p>
-            <% } %>
+            <strong>Title:</strong>
+            <%= listing.title %>
           </li>
-          <li class="list-group-item"><strong>Price:</strong> ₹<%= listing.price %></li>
-          <li class="list-group-item"><strong>Location:</strong> <%= listing.location %>, <%= listing.country %></li>
-          <li class="list-group-item"><strong>Women Only:</strong> <%= listing.isWomenOnly %></li>
-          <li class="list-group-item"><strong>Host Gender:</strong> <%= listing.hostGender %></li>
-          <li class="list-group-item"><strong>Secure Lock:</strong> <%= listing.hasSecureLock %></li>
-          <li class="list-group-item"><strong>Emergency Support:</strong> <%= listing.emergencySupport %></li>
-          <li class="list-group-item"><strong>Safety Rating:</strong> <%= listing.safetyRating %> / 5</li>
+
+          <% if (listing.owner) { %>
+            <li class="list-group-item">
+              <strong>Hosted By:</strong>
+              <i><%= listing.owner.username %></i>
+            </li>
+          <% } %>
+
+          <li class="list-group-item">
+            <strong>Description:</strong>
+            <%= listing.description %>
+          </li>
+
+          <li class="list-group-item">
+
+            <strong>Image:</strong><br><br>
+
+            <% if (listing.image && listing.image.url) { %>
+
+              <img
+                src="<%= listing.image.url %>"
+                class="img-fluid rounded shadow"
+                style="max-height: 400px;"
+              >
+
+            <% } else { %>
+
+              <p>No image uploaded.</p>
+
+            <% } %>
+
+          </li>
+
+          <li class="list-group-item">
+            <strong>Price:</strong>
+            ₹<%= listing.price %>
+          </li>
+
+          <li class="list-group-item">
+            <strong>Location:</strong>
+            <%= listing.location %>,
+            <%= listing.country %>
+          </li>
+
+          <li class="list-group-item">
+            <strong>Women Only:</strong>
+            <%= listing.isWomenOnly ? "Yes" : "No" %>
+          </li>
+
+          <li class="list-group-item">
+            <strong>Host Gender:</strong>
+            <%= listing.hostGender %>
+          </li>
+
+          <li class="list-group-item">
+            <strong>Secure Lock:</strong>
+            <%= listing.hasSecureLock ? "Yes" : "No" %>
+          </li>
+
+          <li class="list-group-item">
+            <strong>Emergency Support:</strong>
+            <%= listing.emergencySupport ? "Yes" : "No" %>
+          </li>
+
+          <li class="list-group-item">
+            <strong>Safety Rating:</strong>
+
+            <div class="progress mt-2">
+
+              <div
+                class="progress-bar bg-success"
+                role="progressbar"
+                style="width: <%= listing.safetyRating * 20 %>%">
+
+                <%= listing.safetyRating %>/5
+
+              </div>
+
+            </div>
+          </li>
+
+          <!-- NEW WOMEN SAFETY FEATURES -->
+
+          <li class="list-group-item">
+            <strong>24/7 Security:</strong>
+            <%= listing.security24x7 ? "Yes" : "No" %>
+          </li>
+
+          <li class="list-group-item">
+            <strong>CCTV Available:</strong>
+            <%= listing.hasCCTV ? "Yes" : "No" %>
+          </li>
+
+          <li class="list-group-item">
+            <strong>Female Staff Available:</strong>
+            <%= listing.femaleStaffAvailable ? "Yes" : "No" %>
+          </li>
+
+          <li class="list-group-item">
+            <strong>Late Night Check-in:</strong>
+            <%= listing.lateNightCheckin ? "Yes" : "No" %>
+          </li>
+
+          <li class="list-group-item">
+            <strong>Well Lit Area:</strong>
+            <%= listing.wellLitArea ? "Yes" : "No" %>
+          </li>
+
+          <li class="list-group-item">
+            <strong>Night Cab Availability:</strong>
+            <%= listing.cabAvailabilityNight ? "Yes" : "No" %>
+          </li>
+
+          <li class="list-group-item">
+            <strong>Nearby Police Station:</strong>
+            <%= listing.nearbyPoliceStation ? "Yes" : "No" %>
+          </li>
+
+          <li class="list-group-item">
+            <strong>Public Transport Nearby:</strong>
+            <%= listing.publicTransportNearby ? "Yes" : "No" %>
+          </li>
+
         </ul>
+
+        <!-- AI SAFETY INSIGHT -->
+
+        <div class="alert alert-info mt-4 shadow-sm">
+
+          <h5 class="text-primary">
+            AI Safety Insight
+          </h5>
+
+          <% if (
+            listing.security24x7 &&
+            listing.hasCCTV &&
+            listing.lateNightCheckin
+          ) { %>
+
+            <p>
+              This property appears suitable for solo women travelers,
+              especially for late-night arrivals, because it offers
+              24/7 security, CCTV monitoring, and late-night check-in.
+            </p>
+
+          <% } else { %>
+
+            <p>
+              Travelers should carefully review safety features
+              before booking this property.
+            </p>
+
+          <% } %>
+
+        </div>
+
       </div>
     </div>
 
-    <% if (currUser && currUser._id.toString() === listing.owner._id.toString()) { %>
+    <!-- OWNER BUTTONS -->
+
+    <% if (
+      currUser &&
+      currUser._id.toString() === listing.owner._id.toString()
+    ) { %>
+
       <div class="mt-4 d-flex gap-2 justify-content-center">
-        <a href="/listings/<%= listing._id %>/edit" class="btn btn-warning">Edit Listing</a>
-        <form method="POST" action="/listings/<%= listing._id %>?_method=DELETE" onsubmit="return confirm('Are you sure you want to delete this listing?');">
-          <button class="btn btn-danger">Delete Listing</button>
+
+        <a
+          href="/listings/<%= listing._id %>/edit"
+          class="btn btn-warning">
+
+          Edit Listing
+
+        </a>
+
+        <form
+          method="POST"
+          action="/listings/<%= listing._id %>?_method=DELETE"
+          onsubmit="return confirm('Delete this listing?');">
+
+          <button class="btn btn-danger">
+            Delete Listing
+          </button>
+
         </form>
+
       </div>
+
     <% } %>
 
     <hr>
-    <div class="col-8 offset-3">
+
+    <!-- REVIEW FORM -->
+
+    <div class="col-8 offset-2">
+
       <% if (currUser && currUser._id) { %>
-        <h4>Leave a Review</h4>
-        <form action="/listings/<%= listing.id%>/reviews" method="POST">
+
+        <h4 class="mb-4 text-primary">
+          Leave a Review
+        </h4>
+
+        <form action="/listings/<%= listing.id %>/reviews" method="POST">
+
+          <!-- STAR RATING -->
+
           <fieldset class="starability-slot">
-            <input type="radio" id="no-rate" class="review[rating]" name="review[rating]" value="1" checked aria-label="No rating." />
+
             <input type="radio" id="first-rate1" name="review[rating]" value="1" />
-            <label for="first-rate1" title="Terrible">1 star</label>
+            <label for="first-rate1">1 star</label>
+
             <input type="radio" id="first-rate2" name="review[rating]" value="2" />
-            <label for="first-rate2" title="Not good">2 stars</label>
+            <label for="first-rate2">2 stars</label>
+
             <input type="radio" id="first-rate3" name="review[rating]" value="3" />
-            <label for="first-rate3" title="Average">3 stars</label>
+            <label for="first-rate3">3 stars</label>
+
             <input type="radio" id="first-rate4" name="review[rating]" value="4" />
-            <label for="first-rate4" title="Very good">4 stars</label>
-            <input type="radio" id="first-rate5" name="review[rating]" value="5" />
-            <label for="first-rate5" title="Amazing">5 stars</label>
+            <label for="first-rate4">4 stars</label>
+
+            <input type="radio" id="first-rate5" name="review[rating]" value="5" checked />
+            <label for="first-rate5">5 stars</label>
+
           </fieldset>
 
-          <div>
-            <label for="comment">Comment</label>
-            <textarea name="review[comment]" id="comment" cols="50" rows="10" required></textarea>
+          <!-- COMMENT -->
+
+          <div class="mb-3">
+
+            <label for="comment" class="form-label">
+              Comment
+            </label>
+
+            <textarea
+              name="review[comment]"
+              id="comment"
+              class="form-control"
+              rows="4"
+              required></textarea>
+
           </div>
 
-          <div>
-            <label>Did you feel safe during your stay?</label><br>
-            <input type="radio" id="safeYes" name="review[feltSafe]" value="true" checked>
+          <!-- FELT SAFE -->
+
+          <div class="mb-3">
+
+            <label class="form-label">
+              Did you feel safe?
+            </label><br>
+
+            <input
+              type="radio"
+              id="safeYes"
+              name="review[feltSafe]"
+              value="true"
+              checked>
+
             <label for="safeYes">Yes</label>
-            <input type="radio" id="safeNo" name="review[feltSafe]" value="false">
+
+            <input
+              type="radio"
+              id="safeNo"
+              name="review[feltSafe]"
+              value="false">
+
             <label for="safeNo">No</label>
+
           </div>
 
-          <button>Submit</button>
+          <!-- SOLO WOMEN -->
+
+          <div class="mb-3">
+
+            <label class="form-label">
+              Safe for Solo Women?
+            </label><br>
+
+            <input
+              type="radio"
+              id="soloYes"
+              name="review[safeForSoloWomen]"
+              value="true"
+              checked>
+
+            <label for="soloYes">Yes</label>
+
+            <input
+              type="radio"
+              id="soloNo"
+              name="review[safeForSoloWomen]"
+              value="false">
+
+            <label for="soloNo">No</label>
+
+          </div>
+
+          <!-- LATE NIGHT EXPERIENCE -->
+
+          <div class="mb-3">
+
+            <label class="form-label">
+              Late Night Experience
+            </label>
+
+            <textarea
+              name="review[lateNightExperience]"
+              class="form-control"
+              rows="3"
+              placeholder="Describe your late-night experience"></textarea>
+
+          </div>
+
+          <button class="btn btn-primary">
+            Submit Review
+          </button>
+
         </form>
+
       <% } %>
+
     </div>
 
     <hr>
 
-    <h4 class="mt-4 mb-3 text-primary">All Reviews</h4>
+    <!-- ALL REVIEWS -->
+
+    <h4 class="mt-4 mb-3 text-primary">
+      All Reviews
+    </h4>
 
     <ul class="list-unstyled">
+
       <% for (let review of listing.reviews) { %>
+
         <li class="card mb-3 shadow-sm">
+
           <div class="card-body">
-            <p class="mb-1"><strong>By:</strong> <%= review.author?.username || "Anonymous" %></p>
-            <p class="mb-1"><strong>Rating:</strong> <%= review.rating %> / 5</p>
-            <p class="starability-result" data-rating="<%= review.rating %>">
-              Rated: <%= review.rating %> star<%= review.rating > 1 ? 's' : '' %>
+
+            <p>
+              <strong>By:</strong>
+              <%= review.author?.username || "Anonymous" %>
             </p>
-            <p class="mb-1"><strong>Comment:</strong> <%= review.comment %></p>
-            <p class="mb-0"><strong>Felt Safe:</strong> 
+
+            <p>
+              <strong>Rating:</strong>
+              <%= review.rating %>/5
+            </p>
+
+            <p>
+              <strong>Comment:</strong>
+              <%= review.comment %>
+            </p>
+
+            <p>
+              <strong>Felt Safe:</strong>
+
               <span class="<%= review.feltSafe ? 'text-success' : 'text-danger' %>">
-                <%= review.feltSafe ? 'Yes' : 'No' %>
+
+                <%= review.feltSafe ? "Yes" : "No" %>
+
               </span>
             </p>
-            <form class="mb-3" method="POST" action="/listings/<%= listing._id %>/reviews/<%= review._id %>?_method=DELETE">
-              <button>Delete</button>
+
+            <p>
+              <strong>Safe for Solo Women:</strong>
+
+              <span class="<%= review.safeForSoloWomen ? 'text-success' : 'text-danger' %>">
+
+                <%= review.safeForSoloWomen ? "Yes" : "No" %>
+
+              </span>
+            </p>
+
+            <% if(review.lateNightExperience){ %>
+
+              <p>
+                <strong>Late Night Experience:</strong>
+                <%= review.lateNightExperience %>
+              </p>
+
+            <% } %>
+
+            <form
+              method="POST"
+              action="/listings/<%= listing._id %>/reviews/<%= review._id %>?_method=DELETE">
+
+              <button class="btn btn-sm btn-danger">
+                Delete
+              </button>
+
             </form>
+
           </div>
+
         </li>
+
       <% } %>
+
     </ul>
+
   </div>
+
 </body>
