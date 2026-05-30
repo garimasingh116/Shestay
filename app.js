@@ -35,11 +35,10 @@ const listingcontroller=require("./controllers/listing.js")
 // const MONGO_URL="mongodb://127.0.0.1:27017/shestay";
 const dburl=process.env.ATLAS_DB
 async function main() {
-  await mongoose.connect(dburl, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-    tls: true,
-  });
+
+
+  
+  await mongoose.connect(dburl);
 }
 main().then(() =>{
     console.log("connected with db");
@@ -47,33 +46,24 @@ main().then(() =>{
 }).catch((err)=>{
     console.log(err);
 })
+console.log("SECRET =", process.env.SECRET);
+console.log("DBURL =", process.env.ATLAS_DB);
 
-    const store = MongoStore.create({
-      mongoUrl: dburl,
-      mongoOptions: {
-        tls: true,
-      },
-      crypto: {
-        secret: process.env.SECRET,
-      },
-      touchAfter: 24 * 3600,
-    });
+    const sessionOptions = {
+  secret: process.env.SECRET,
+  resave: false,
+  saveUninitialized: true,
+
+  cookie: {
+    expires: Date.now() + 7 * 24 * 60 * 60 * 1000,
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+    httpOnly: true,
+  },
+};
 
 
-store.on("error",()=>{
-  console.log("error",err);
-})
-const sessionOptions={
-  store,
-  secret:process.env.SECRET,
-  resave:false,
-  saveUninitialized:true,
-  cookie:{
-    exprires:Date.now()+7*24*60*60*1000,
-    maxAge:7*24*60*60*1000,
-    httpOnly:true,
-  }
-}
+
+
 // app.get("/",(req,res)=>{
 //     res.send("hello..garima")
 // })
@@ -171,7 +161,7 @@ app.get("/listings",listingcontroller.index);
 app.get("/signup",(req,res)=>{
   res.render("user/signup");
 })
-app.post("/signup",async(req,res)=>{
+app.post("/signup",async(req,res,next)=>{
   try{
   let {username,email,password}=req.body;
  const newUser= new User({email,username});
@@ -351,9 +341,7 @@ app.post("/login",saveRedirectUrl,
   res.redirect(redirectUrl);
 
 })
-app.get("/gungun",(req,res)=>{
-  res.send("hello gungun")
-})
+
 
 app.get("/logout",(req,res,next)=>{
   req.logout((err)=>{
