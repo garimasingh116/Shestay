@@ -176,7 +176,35 @@
 
       </div>
     </div>
+<!-- BOOKING / PAYMENT -->
 
+<div class="text-center mt-4">
+
+  <% if(currUser){ %>
+
+    <button
+      id="pay-btn"
+      class="btn btn-success btn-lg px-5 shadow">
+
+      <i class="fa-solid fa-credit-card me-2"></i>
+
+      Book Now - ₹<%= listing.price %>
+
+    </button>
+
+  <% } else { %>
+
+    <a
+      href="/login"
+      class="btn btn-primary btn-lg">
+
+      Login to Book
+
+    </a>
+
+  <% } %>
+
+</div>
     <!-- OWNER BUTTONS -->
 
     <% if (
@@ -417,8 +445,100 @@
 
       <% } %>
 
-    </ul>
+        </ul>
 
   </div>
 
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+<script>
+
+const payBtn = document.getElementById("pay-btn");
+
+if(payBtn){
+
+  payBtn.addEventListener("click", async ()=>{
+
+    try{
+
+      const response = await fetch(
+        "/create-order",
+        {
+          method:"POST",
+          headers:{
+            "Content-Type":"application/json"
+          },
+          body:JSON.stringify({
+            amount:<%= listing.price %>,
+            listingId:"<%= listing._id %>"
+          })
+        }
+      );
+
+      const order = await response.json();
+
+      const options = {
+
+        key: "<%= process.env.RAZORPAY_KEY_ID %>",
+
+        amount:order.amount,
+
+        currency:"INR",
+
+        order_id:order.id,
+
+        name:"SheStay",
+
+        description:"Safe Stay Booking",
+
+        handler: async function(response){
+
+  const bookingResponse = await fetch(
+    "/booking/success",
+    {
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json"
+      },
+      body:JSON.stringify({
+        listingId:"<%= listing._id %>",
+        paymentId:response.razorpay_payment_id,
+        orderId:response.razorpay_order_id,
+        amount:<%= listing.price %>
+      })
+    }
+  );
+
+  const data = await bookingResponse.json();
+
+  if(data.success){
+
+    alert("Booking Confirmed!");
+
+    window.location.href="/bookings";
+
+  }
+
+}
+
+      };
+
+      const rzp = new Razorpay(options);
+
+      rzp.open();
+
+    }
+    catch(err){
+
+      alert("Payment Failed");
+
+    }
+
+  });
+
+}
+
+</script>
+
 </body>
+

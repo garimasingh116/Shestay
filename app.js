@@ -8,6 +8,8 @@ const express=require("express");
 const app=express();
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+const razorpay=require("./utils/Rayzorpay.js");
+const Booking = require("./models/booking");
 
 const mongoose=require("mongoose");
 const Listing=require("./models/listing.js")
@@ -354,6 +356,94 @@ app.get("/logout",(req,res,next)=>{
 })
 
 
+app.post("/booking/success", async(req,res)=>{
 
+  try{
+
+    const {
+      listingId,
+      paymentId,
+      orderId,
+      amount
+    } = req.body;
+
+    const existingBooking =
+      await Booking.findOne({
+        paymentId
+      });
+
+    if(existingBooking){
+
+      return res.json({
+        success:true,
+        message:"Booking already exists"
+      });
+
+    }
+
+    const booking =
+      new Booking({
+
+        listing:listingId,
+
+        user:req.user._id,
+
+        amount,
+
+        paymentId,
+
+        orderId,
+
+        status:"paid"
+
+      });
+
+    await booking.save();
+
+    res.json({
+      success:true
+    });
+
+  }
+  catch(err){
+
+    console.log(err);
+
+    res.status(500).json({
+      success:false
+    });
+
+  }
+
+});
+app.post("/create-order", async (req,res)=>{
+
+  try{
+
+    const amount = req.body.amount * 100;
+
+    const order = await razorpay.orders.create({
+      amount,
+      currency:"INR"
+    });
+
+    console.log("ORDER CREATED:");
+    console.log(order);
+
+    res.json(order);
+
+  }
+  catch(err){
+
+    console.log("RAZORPAY ERROR:");
+    console.log(err);
+
+    res.status(500).json({
+      error: err.message
+    });
+
+  }
+
+});
 
 
