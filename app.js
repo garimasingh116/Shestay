@@ -18,8 +18,7 @@ const methodOverride=require("method-override")
 const ejsMate=require("ejs-mate");
 const ExpressError=require("./utils/ExpressError")
 const Reviews=require("./models/review.js");
-const session=require("express-session");
-const MongoStore = require('connect-mongo');
+
 const flash=require("connect-flash");
 const passport=require("passport");
 const LocalStrategy=require("passport-local");
@@ -31,11 +30,18 @@ const {storage}=require("./cloudConfig.js")
 const upload = multer({ storage })
 const {isOwner,isAuthor}=require("./middleware.js")
 const listingcontroller=require("./controllers/listing.js")
+const session=require("express-session")
+
+const { RedisStore } = require("connect-redis");
+
+const redisClient =
+  require("./utils/redis");
 
 
 
 // const MONGO_URL="mongodb://127.0.0.1:27017/shestay";
 const dburl=process.env.ATLAS_DB
+
 async function main() {
 
 
@@ -48,21 +54,41 @@ main().then(() =>{
 }).catch((err)=>{
     console.log(err);
 })
-console.log("SECRET =", process.env.SECRET);
-console.log("DBURL =", process.env.ATLAS_DB);
 
-    const sessionOptions = {
+
+   const store = new RedisStore({
+  client: redisClient,
+  prefix: "shestay:",
+   ttl: 86400
+});
+
+const sessionOptions = {
+
+  store,
+
   secret: process.env.SECRET,
+
   resave: false,
-  saveUninitialized: true,
+
+  saveUninitialized: false,
 
   cookie: {
-    expires: Date.now() + 7 * 24 * 60 * 60 * 1000,
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-    httpOnly: true,
-  },
-};
 
+    expires: new Date(
+      Date.now() +
+      7 * 24 * 60 * 60 * 1000
+    ),
+
+    maxAge:
+      7 * 24 * 60 * 60 * 1000,
+
+    httpOnly: true,
+
+    secure: false
+
+  }
+
+};
 
 
 
@@ -196,29 +222,70 @@ app.get("/listings/new",isLoggedIn,(req,res)=>{
 //show route
 
 
+
 app.get("/listings/:id", async (req, res) => {
+
   const { id } = req.params;
 
-  // ✅ Validate ObjectId
   if (!mongoose.Types.ObjectId.isValid(id)) {
     req.flash("error", "Invalid listing ID.");
     return res.redirect("/listings");
   }
 
-  const listing = await Listing.findById(id).populate({ path:"reviews",
-    populate:{
-      path:"author",
-    }
+  const cacheKey = `listing:${id}`;
 
-  }).populate("owner");
+  const cachedListing =
+    await redisClient.get(cacheKey);
+
+  if(cachedListing){
+
+    console.log("FROM REDIS");
+
+    return res.render(
+      "listings/show",
+      {
+        listing:
+          JSON.parse(cachedListing)
+      }
+    );
+
+  }
+
+  console.log("FROM MONGODB");
+
+  const listing =
+    await Listing.findById(id)
+      .populate({
+        path:"reviews",
+        populate:{
+          path:"author"
+        }
+      })
+      .populate("owner");
 
   if (!listing) {
-    req.flash("error", "Listing you requested does not exist!");
+
+    req.flash(
+      "error",
+      "Listing you requested does not exist!"
+    );
+
     return res.redirect("/listings");
   }
 
-  console.log(listing);
-  res.render("listings/show", { listing });
+  await redisClient.set(
+    cacheKey,
+    JSON.stringify(listing),
+    {
+      EX: 300
+    }
+  );
+
+  res.render(
+    "listings/show",
+    { listing }
+  );
+
 });
 
 // app.get("/demouser",async(req,res)=>{
@@ -248,7 +315,9 @@ app.post("/listings",isLoggedIn,
     newListing.image={url,filename}
     await newListing.save();
 
-    req.flash("success", "new listing created!");
+await redisClient.del("allListings");
+
+req.flash("success", "new listing created!");
     res.redirect("/listings");
   } catch (err) {
     next(err);
@@ -445,5 +514,3 @@ app.post("/create-order", async (req,res)=>{
   }
 
 });
-
-
