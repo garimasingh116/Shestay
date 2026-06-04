@@ -9,6 +9,7 @@
     "start": "node app.js"
   },
   "dependencies": {
+    "@huggingface/transformers": "^3.8.1",
     "@langchain/community": "^0.3.59",
     "@langchain/core": "^0.3.80",
     "@langchain/google-genai": "^0.2.18",
