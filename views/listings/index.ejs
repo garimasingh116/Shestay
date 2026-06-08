@@ -68,44 +68,220 @@
 
 <body>
 
-  <!-- FILTER BAR -->
+  <!-- SHESTAY SAFETY FILTERS -->
 
-  <div id="filters" class="shadow-sm">
+<form action="/listings" method="GET" class="container mt-4">
 
-    <div class="filter">
-      <div><i class="fa-solid fa-fire"></i></div>
-      <p>Trending</p>
+  <div
+    class="card shadow-sm border-0 p-4"
+    style="
+      border-radius:18px;
+      background:#fff;
+    "
+  >
+
+    <h5
+      class="fw-bold mb-3"
+      style="color:#6f42c1;"
+    >
+      <i class="fa-solid fa-shield-heart me-2"></i>
+      SheStay Safety Filters
+    </h5>
+
+    <div class="row g-3">
+
+      <div class="col-md-2">
+
+        <div class="form-check">
+
+          <input
+            class="form-check-input"
+            type="checkbox"
+            name="womenOnly"
+            id="womenOnly"
+          >
+
+          <label
+            class="form-check-label"
+            for="womenOnly"
+          >
+            Women Only
+          </label>
+
+        </div>
+
+      </div>
+
+      <div class="col-md-2">
+
+        <div class="form-check">
+
+          <input
+            class="form-check-input"
+            type="checkbox"
+            name="femaleHost"
+            id="femaleHost"
+          >
+
+          <label
+            class="form-check-label"
+            for="femaleHost"
+          >
+            Female Host
+          </label>
+
+        </div>
+
+      </div>
+
+      <div class="col-md-2">
+
+        <div class="form-check">
+
+          <input
+            class="form-check-input"
+            type="checkbox"
+            name="cctv"
+            id="cctv"
+          >
+
+          <label
+            class="form-check-label"
+            for="cctv"
+          >
+            CCTV
+          </label>
+
+        </div>
+
+      </div>
+
+      <div class="col-md-2">
+
+        <div class="form-check">
+
+          <input
+            class="form-check-input"
+            type="checkbox"
+            name="security24x7"
+            id="security24x7"
+          >
+
+          <label
+            class="form-check-label"
+            for="security24x7"
+          >
+            24×7 Security
+          </label>
+
+        </div>
+
+      </div>
+
+      <div class="col-md-2">
+
+        <div class="form-check">
+
+          <input
+            class="form-check-input"
+            type="checkbox"
+            name="lateNightCheckin"
+            id="lateNightCheckin"
+          >
+
+          <label
+            class="form-check-label"
+            for="lateNightCheckin"
+          >
+            Late Night Check-In
+          </label>
+
+        </div>
+
+      </div>
+
+      <div class="col-md-2">
+
+        <div class="form-check">
+
+          <input
+            class="form-check-input"
+            type="checkbox"
+            name="wellLitArea"
+            id="wellLitArea"
+          >
+
+          <label
+            class="form-check-label"
+            for="wellLitArea"
+          >
+            Well Lit Area
+          </label>
+
+        </div>
+
+      </div>
+
+      <div class="col-md-3">
+
+        <select
+          name="safetyRating"
+          class="form-select"
+        >
+
+          <option value="">
+            Safety Rating
+          </option>
+
+          <option value="3">
+            3+ Stars
+          </option>
+
+          <option value="4">
+            4+ Stars
+          </option>
+
+          <option value="5">
+            5 Stars
+          </option>
+
+        </select>
+
+      </div>
+
+      <div class="col-md-3">
+
+        <button
+          class="btn btn-dark w-100"
+          type="submit"
+        >
+
+          <i class="fa-solid fa-filter me-2"></i>
+
+          Apply Filters
+
+        </button>
+
+      </div>
+
+      <div class="col-md-3">
+
+        <a
+          href="/listings"
+          class="btn btn-outline-secondary w-100"
+        >
+
+          Clear Filters
+
+        </a>
+
+      </div>
+
     </div>
 
-    <div class="filter">
-      <div><i class="fa-solid fa-bed"></i></div>
-      <p>Rooms</p>
-    </div>
+  </div>
 
-    <div class="filter">
-      <div><i class="fa-solid fa-mountain-sun"></i></div>
-      <p>Iconic Cities</p>
-    </div>
-
-    <div class="filter">
-      <div><i class="fa-solid fa-person-swimming"></i></div>
-      <p>Amazing Pools</p>
-    </div>
-
-    <div class="filter">
-      <div><i class="fa-solid fa-chess-rook"></i></div>
-      <p>Castle</p>
-    </div>
-
-    <div class="filter">
-      <div><i class="fa-solid fa-cow"></i></div>
-      <p>Farms</p>
-    </div>
-
-    <div class="filter">
-      <div><i class="fa-solid fa-tents"></i></div>
-      <p>Camping</p>
-    </div>
+</form>
 
     <!-- TAX SWITCH -->
 

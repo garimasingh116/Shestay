@@ -31,7 +31,8 @@ const upload = multer({ storage })
 const {isOwner,isAuthor}=require("./middleware.js")
 const listingcontroller=require("./controllers/listing.js")
 const session=require("express-session")
-
+const safetyScore=require("./utils/safetyscore.js")
+const revewScore=require("./utils/reviewscore.js")
 const { RedisStore } = require("connect-redis");
 
 const redisClient =
@@ -174,18 +175,52 @@ app.post("/ai/search", async(req,res)=>{
   }
 
 });
-app.get("/test",(req,res)=>{
-  res.send("TEST WORKING");
-});
-app.get("/", (req, res) => {
-  res.redirect("/listings");
-});
-app.get("/ai",(req,res)=>{
-  res.render("listings/ai");
-});
 
 
 app.get("/listings",listingcontroller.index);
+
+app.get("/listings", async (req, res) => {
+
+  let filter = {};
+
+  if (req.query.womenOnly) {
+    filter.isWomenOnly = true;
+  }
+
+  if (req.query.femaleHost) {
+    filter.hostGender = "female";
+  }
+
+  if (req.query.cctv) {
+    filter.hasCCTV = true;
+  }
+
+  if (req.query.security24x7) {
+    filter.security24x7 = true;
+  }
+
+  if (req.query.lateNightCheckin) {
+    filter.lateNightCheckin = true;
+  }
+
+  if (req.query.wellLitArea) {
+    filter.wellLitArea = true;
+  }
+
+  if (req.query.safetyRating) {
+    filter.safetyRating = {
+      $gte: Number(req.query.safetyRating)
+    };
+  }
+
+  const allListing = await Listing.find(filter);
+
+  res.render("listings/index", {
+    allListing
+  });
+
+});
+
 app.get("/signup",(req,res)=>{
   res.render("user/signup");
 })
@@ -213,13 +248,15 @@ app.post("/signup",async(req,res,next)=>{
 
 
 
-
 //new route
 app.get("/listings/new",isLoggedIn,(req,res)=>{
   
   res.render("listings/new");
 })
 //show route
+app.get("/ai",(req,res)=>{
+  res.render("listings/ai");
+})
 
 
 
@@ -237,54 +274,85 @@ app.get("/listings/:id", async (req, res) => {
   const cachedListing =
     await redisClient.get(cacheKey);
 
-  if(cachedListing){
+  let listing;
+
+  if (cachedListing) {
 
     console.log("FROM REDIS");
 
-    return res.render(
-      "listings/show",
-      {
-        listing:
-          JSON.parse(cachedListing)
-      }
-    );
+    listing = JSON.parse(cachedListing);
 
-  }
-  //he
+  } else {
 
-  console.log("FROM MONGODB");
+    console.log("FROM MONGODB");
 
-  const listing =
-    await Listing.findById(id)
+    listing = await Listing.findById(id)
       .populate({
-        path:"reviews",
-        populate:{
-          path:"author"
+        path: "reviews",
+        populate: {
+          path: "author"
         }
       })
       .populate("owner");
 
-  if (!listing) {
+    if (!listing) {
 
-    req.flash(
-      "error",
-      "Listing you requested does not exist!"
+      req.flash(
+        "error",
+        "Listing you requested does not exist!"
+      );
+
+      return res.redirect("/listings");
+    }
+
+    await redisClient.set(
+      cacheKey,
+      JSON.stringify(listing),
+      {
+        EX: 300
+      }
     );
-
-    return res.redirect("/listings");
   }
 
-  await redisClient.set(
-    cacheKey,
-    JSON.stringify(listing),
-    {
-      EX: 300
+  // REVIEW SAFETY ANALYSIS
+
+  const total = listing.reviews.length;
+
+  let safeCount = 0;
+  let soloCount = 0;
+
+  listing.reviews.forEach(review => {
+
+    if (review.feltSafe) {
+      safeCount++;
     }
+
+    if (review.safeForSoloWomen) {
+      soloCount++;
+    }
+
+  });
+
+  const safePercent = total
+    ? Math.round((safeCount / total) * 100)
+    : 0;
+
+  const soloPercent = total
+    ? Math.round((soloCount / total) * 100)
+    : 0;
+
+  const reviewScore = Math.round(
+    (safePercent + soloPercent) / 2
   );
 
   res.render(
     "listings/show",
-    { listing }
+    {
+      listing,
+      reviewScore,
+      safePercent,
+      soloPercent
+    }
   );
 
 });

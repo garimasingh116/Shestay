@@ -83,22 +83,44 @@
           </li>
 
           <li class="list-group-item">
-            <strong>Safety Rating:</strong>
 
-            <div class="progress mt-2">
+  <strong>AI Safety Score:</strong>
 
-              <div
-                class="progress-bar bg-success"
-                role="progressbar"
-                style="width: <%= listing.safetyRating * 20 %>%">
+  <div class="progress mt-2">
 
-                <%= listing.safetyRating %>/5
+    <div
+      class="progress-bar bg-success"
+      role="progressbar"
+      style="width:<%= listing.safetyRating %>%"
+    >
 
-              </div>
+      <%= listing.safetyRating %>/100
 
-            </div>
-          </li>
+    </div>
 
+  </div>
+
+  <% if(listing.safetyRating >= 80){ %>
+
+    <span class="badge bg-success mt-2">
+      Highly Safe
+    </span>
+
+  <% } else if(listing.safetyRating >= 60){ %>
+
+    <span class="badge bg-warning text-dark mt-2">
+      Moderately Safe
+    </span>
+
+  <% } else { %>
+
+    <span class="badge bg-danger mt-2">
+      Safety Needs Improvement
+    </span>
+
+  <% } %>
+
+</li>
           <!-- NEW WOMEN SAFETY FEATURES -->
 
           <li class="list-group-item">
@@ -249,7 +271,7 @@
           Leave a Review
         </h4>
 
-        <form action="/listings/<%= listing.id %>/reviews" method="POST">
+        <form action="/listings/<%= listing._id %>/reviews" method="POST">
 
           <!-- STAR RATING -->
 
@@ -370,6 +392,31 @@
     </div>
 
     <hr>
+    <div class="alert alert-success mt-4">
+
+  <h5>
+    🤖 AI Review Safety Score
+  </h5>
+
+  <h3>
+    <%= reviewScore %>/100
+  </h3>
+
+  <p>
+
+    <strong><%= safePercent %>%</strong>
+    of guests felt safe.
+
+  </p>
+
+  <p>
+
+    <strong><%= soloPercent %>%</strong>
+    recommend this property for solo women travelers.
+
+  </p>
+
+</div>
 
     <!-- ALL REVIEWS -->
 

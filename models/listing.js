@@ -1,8 +1,10 @@
-const mongoose =require("mongoose");
+
+const mongoose = require("mongoose");
 const review = require("./review");
 const schema = mongoose.Schema;
-const User=require("./user")
-
+const User = require("./user");
+const calculateSafetyScore =
+require("../utils/safetyscore");
 const listingSchema = new schema({
   title: {
     type: String,
@@ -92,10 +94,9 @@ const listingSchema = new schema({
 
   // AI SAFETY SCORE
   safetyRating: {
-    type: Number,
-    min: 1,
-    max: 5
-  },
+  type: Number,
+  default: 0
+},
 
   // TAGS FOR RAG
   safetyTags: [String],
@@ -112,5 +113,20 @@ const listingSchema = new schema({
     ref: "User",
   }
 });
-const Listing = mongoose.model("Listing", listingSchema); 
-module.exports = Listing; 
+// schema here ...
+
+
+
+listingSchema.pre("save", function(next){
+
+  this.safetyRating =
+    calculateSafetyScore(this);
+
+  next();
+
+});
+
+const Listing =
+mongoose.model("Listing", listingSchema);
+
+module.exports = Listing;

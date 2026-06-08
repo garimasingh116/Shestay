@@ -177,6 +177,7 @@ When recommending a property:
 5. If there are alternative properties, briefly mention them afterward.
 6. Sound like a helpful travel advisor, not a database.
 
+give spaces between one and the next listing
 ${context}
 `,
           },
