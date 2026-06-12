@@ -57,40 +57,29 @@ main().then(() =>{
 })
 
 
-   const store = new RedisStore({
-  client:redisClient, 
-  prefix: "shestay:",
-   ttl: 86400
-});
-
-const sessionOptions = {
-
-  store,
-
+  let sessionOptions = {
   secret: process.env.SECRET,
-
   resave: false,
-
   saveUninitialized: false,
-
   cookie: {
-
     expires: new Date(
-      Date.now() +
-      7 * 24 * 60 * 60 * 1000
+      Date.now() + 7 * 24 * 60 * 60 * 1000
     ),
-
-    maxAge:
-      7 * 24 * 60 * 60 * 1000,
-
+    maxAge: 7 * 24 * 60 * 60 * 1000,
     httpOnly: true,
-
-    secure: false
-
-  }
-
+    secure: false,
+  },
 };
 
+if (redisClient) {
+  const store = new RedisStore({
+    client: redisClient,
+    prefix: "shestay:",
+    ttl: 86400,
+  });
+
+  sessionOptions.store = store;
+}
 
 
 // app.get("/",(req,res)=>{
@@ -261,7 +250,6 @@ app.get("/ai",(req,res)=>{
 
 
 app.get("/listings/:id", async (req, res) => {
-
   const { id } = req.params;
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -271,66 +259,56 @@ app.get("/listings/:id", async (req, res) => {
 
   const cacheKey = `listing:${id}`;
 
-  const cachedListing =
-    await redisClient.get(cacheKey);
+  let cachedData = null;
+
+  if (redisClient) {
+    cachedData = await redisClient.get(cacheKey);
+  }
 
   let listing;
 
-  if (cachedListing) {
-
+  if (cachedData) {
     console.log("FROM REDIS");
-
-    listing = JSON.parse(cachedListing);
-
+    listing = JSON.parse(cachedData);
   } else {
-
     console.log("FROM MONGODB");
 
     listing = await Listing.findById(id)
       .populate({
         path: "reviews",
         populate: {
-          path: "author"
-        }
+          path: "author",
+        },
       })
       .populate("owner");
 
     if (!listing) {
-
       req.flash(
         "error",
         "Listing you requested does not exist!"
       );
-
       return res.redirect("/listings");
     }
 
-    await redisClient.set(
-      cacheKey,
-      JSON.stringify(listing),
-      {
-        EX: 300
-      }
-    );
+    if (redisClient) {
+      await redisClient.set(
+        cacheKey,
+        JSON.stringify(listing),
+        {
+          EX: 300,
+        }
+      );
+    }
   }
-
-  // REVIEW SAFETY ANALYSIS
 
   const total = listing.reviews.length;
 
   let safeCount = 0;
   let soloCount = 0;
 
-  listing.reviews.forEach(review => {
-
-    if (review.feltSafe) {
-      safeCount++;
-    }
-
-    if (review.safeForSoloWomen) {
-      soloCount++;
-    }
-
+  listing.reviews.forEach((review) => {
+    if (review.feltSafe) safeCount++;
+    if (review.safeForSoloWomen) soloCount++;
   });
 
   const safePercent = total
@@ -345,16 +323,12 @@ app.get("/listings/:id", async (req, res) => {
     (safePercent + soloPercent) / 2
   );
 
-  res.render(
-    "listings/show",
-    {
-      listing,
-      reviewScore,
-      safePercent,
-      soloPercent
-    }
-  );
-
+  res.render("listings/show", {
+    listing,
+    reviewScore,
+    safePercent,
+    soloPercent,
+  });
 });
 
 // app.get("/demouser",async(req,res)=>{
@@ -384,7 +358,9 @@ app.post("/listings",isLoggedIn,
     newListing.image={url,filename}
     await newListing.save();
 
-await redisClient.del("allListings");
+if (redisClient) {
+  await redisClient.del("allListings");
+}
 
 req.flash("success", "new listing created!");
     res.redirect("/listings");
