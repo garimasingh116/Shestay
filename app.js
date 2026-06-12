@@ -58,7 +58,7 @@ main().then(() =>{
 
 
    const store = new RedisStore({
-  client: redisClient,
+  client:redisClient, 
   prefix: "shestay:",
    ttl: 86400
 });
