@@ -313,11 +313,35 @@
 
       // REMOVE THINKING
 
-      chatContainer.lastChild.remove();
+      // REMOVE THINKING
 
-      // BOT RESPONSE
+chatContainer.lastChild.remove();
 
-      addMessage(data.answer, "bot");
+// BOOKING ACTION
+
+if(
+  typeof data.answer === "object" &&
+  data.answer.action === "BOOK"
+){
+
+  addMessage(
+    `Opening booking page for ${data.answer.title}...`,
+    "bot"
+  );
+
+  setTimeout(() => {
+
+    window.location.href =
+      `/listings/${data.answer.listingId}`;
+
+  }, 1000);
+
+  return;
+}
+
+// NORMAL AI RESPONSE
+
+addMessage(data.answer, "bot");
 
     }
     catch(err){

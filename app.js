@@ -1,8 +1,7 @@
-if(process.env.NODE_ENV !="production"){
-  require("dotenv").config()
+if(process.env.NODE_ENV !== "production"){
+  require("dotenv").config();
 }
-const  askAI  = require("./query");
-require('dotenv').config()
+
 console.log(process.env.SECRET)
 const express=require("express");
 const app=express();
@@ -10,6 +9,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 const razorpay=require("./utils/Rayzorpay.js");
 const Booking = require("./models/booking");
+const askAgent = require("./agent");
 
 const mongoose=require("mongoose");
 const Listing=require("./models/listing.js")
@@ -144,7 +144,10 @@ app.post("/ai/search", async(req,res)=>{
     console.log("QUERY:", query);
 
     const answer =
-      await askAI(query);
+  await askAgent(
+    query,
+    req.user._id
+  );
 
     console.log("ANSWER:", answer);
 
