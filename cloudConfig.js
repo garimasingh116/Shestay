@@ -13,7 +13,7 @@ const storage = new CloudinaryStorage({
   params: {
     folder: 'shey_stay_DEV',
     allowed_formats: ["png", "jpg", "jpeg"],
- // supports promises as well
+ 
     
   },
 });

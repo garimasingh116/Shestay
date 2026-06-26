@@ -217,144 +217,84 @@
   </div>
 
 </body>
-
 <script>
 
-  const chatForm =
-    document.getElementById("chat-form");
+const form = document.getElementById("chat-form");
+const input = document.getElementById("query");
+const chat = document.getElementById("chat-container");
 
-  const queryInput =
-    document.getElementById("query");
+// Suggestion buttons
+document.querySelectorAll(".suggestion").forEach(btn => {
+  btn.onclick = () => {
+    input.value = btn.innerText;
+  };
+});
 
-  const chatContainer =
-    document.getElementById("chat-container");
+form.onsubmit = async (e) => {
+  e.preventDefault();
 
-  // ADD MESSAGE
+  let query = input.value;
 
-  function addMessage(message, type){
+  // User message
+  chat.innerHTML += `
+    <div class="message user">
+      <div class="bubble">${query}</div>
+    </div>
+  `;
 
-    const messageDiv =
-      document.createElement("div");
+  input.value = "";
 
-    messageDiv.classList.add(
-      "message",
-      type
-    );
+  try {
 
-    messageDiv.innerHTML = `
-
-      <div class="bubble">
-        ${message}
-      </div>
-
-    `;
-
-    chatContainer.appendChild(messageDiv);
-
-    chatContainer.scrollTop =
-      chatContainer.scrollHeight;
-
-  }
-
-  // SUGGESTIONS
-
-  const suggestionButtons =
-    document.querySelectorAll(".suggestion");
-
-  suggestionButtons.forEach(btn => {
-
-    btn.addEventListener("click", () => {
-
-      queryInput.value =
-        btn.innerText;
-
+    let res = await fetch("/ai/search", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ query })
     });
 
-  });
+    let data = await res.json();
 
-  // FORM SUBMIT
+    // Booking response
+    if (
+      data.answer &&
+      data.answer.action === "BOOK"
+    ) {
 
-  chatForm.addEventListener("submit", async (e) => {
+      chat.innerHTML += `
+        <div class="message bot">
+          <div class="bubble">
+            Opening ${data.answer.title}...
+          </div>
+        </div>
+      `;
 
-    e.preventDefault();
+      setTimeout(() => {
+        window.location.href =
+          `/listings/${data.answer.listingId}`;
+      }, 1000);
 
-    const query =
-      queryInput.value;
+    } else {
 
-    // USER MESSAGE
-
-    addMessage(query, "user");
-
-    queryInput.value = "";
-
-    // LOADING
-
-    addMessage("Thinking...", "bot");
-
-    try{
-
-      const response = await fetch(
-        "/ai/search",
-        {
-          method:"POST",
-
-          headers:{
-            "Content-Type":"application/json"
-          },
-
-          body:JSON.stringify({
-            query
-          })
-        }
-      );
-
-      const data =
-        await response.json();
-
-      // REMOVE THINKING
-
-      // REMOVE THINKING
-
-chatContainer.lastChild.remove();
-
-// BOOKING ACTION
-
-if(
-  typeof data.answer === "object" &&
-  data.answer.action === "BOOK"
-){
-
-  addMessage(
-    `Opening booking page for ${data.answer.title}...`,
-    "bot"
-  );
-
-  setTimeout(() => {
-
-    window.location.href =
-      `/listings/${data.answer.listingId}`;
-
-  }, 1000);
-
-  return;
-}
-
-// NORMAL AI RESPONSE
-
-addMessage(data.answer, "bot");
-
-    }
-    catch(err){
-
-      chatContainer.lastChild.remove();
-
-      addMessage(
-        "Something went wrong.",
-        "bot"
-      );
-
+      chat.innerHTML += `
+        <div class="message bot">
+          <div class="bubble">
+            ${data.answer}
+          </div>
+        </div>
+      `;
     }
 
-  });
+  } catch {
 
+    chat.innerHTML += `
+      <div class="message bot">
+        <div class="bubble">
+          Something went wrong.
+        </div>
+      </div>
+    `;
+  }
+};
 </script>

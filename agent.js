@@ -20,7 +20,7 @@ async function sheStayAgent(
 ){
 
   const tool =
-    await selectTool(query,);
+    await selectTool(query);
 
   console.log(
     "SELECTED TOOL:",
@@ -49,8 +49,9 @@ async function sheStayAgent(
 
   if(tool === "SAFETY"){
 
-  console.log("USING SAFETY TOOL");
-
+    console.log(
+      "USING SAFETY TOOL"
+    );
   const cityMatch =
     query.match(
       /mumbai|delhi|pune|hyderabad/i

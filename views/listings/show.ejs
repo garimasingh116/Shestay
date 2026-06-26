@@ -516,7 +516,7 @@ if(payBtn){
             "Content-Type":"application/json"
           },
           body:JSON.stringify({
-            amount:<%= listing.price %>,
+            amount:"<%= listing.price %>",
             listingId:"<%= listing._id %>"
           })
         }
@@ -551,7 +551,7 @@ if(payBtn){
         listingId:"<%= listing._id %>",
         paymentId:response.razorpay_payment_id,
         orderId:response.razorpay_order_id,
-        amount:<%= listing.price %>
+        amount:"<%= listing.price %>"
       })
     }
   );

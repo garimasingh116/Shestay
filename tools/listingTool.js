@@ -6,8 +6,8 @@ async function searchListings(city){
   const listings =
     await Listing.find({
       location:{
-        $regex:city,
-        $options:"i"
+        $regex:city, //pattern matching
+        $options:"i" //lowercase and uppercase
       }
     });
 

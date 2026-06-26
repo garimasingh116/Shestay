@@ -13,8 +13,8 @@ async function bookingTool(userQuery){
   const listing =
     await Listing.findOne({
       title: {
-        $regex: cleanQuery,
-        $options: "i"
+        $regex: cleanQuery, //pattern matching
+        $options: "i" //lowercase
       }
     });
 

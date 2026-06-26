@@ -1,73 +1,78 @@
-if(process.env.NODE_ENV !== "production"){
+if (process.env.NODE_ENV !== "production") {
   require("dotenv").config();
 }
 
-console.log(process.env.SECRET)
-const express=require("express");
-const app=express();
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
-const razorpay=require("./utils/Rayzorpay.js");
+const express = require("express");
+const app = express();
+
+const mongoose = require("mongoose");
+const path = require("path");
+const methodOverride = require("method-override");
+const ejsMate = require("ejs-mate");
+const session = require("express-session");
+const flash = require("connect-flash");
+
+const passport = require("passport");
+const LocalStrategy = require("passport-local");
+
+const multer = require("multer");
+const { storage } = require("./cloudConfig.js");
+const upload = multer({ storage });
+
+const { RedisStore } = require("connect-redis");
+const redisClient = require("./utils/redis");
+
+const ExpressError = require("./utils/ExpressError");
+
+const Listing = require("./models/listing.js");
+const Reviews = require("./models/review.js");
+const User = require("./models/user.js");
 const Booking = require("./models/booking");
+
+const {
+  isLoggedIn,
+  saveRedirectUrl,
+  isOwner,
+  isAuthor,
+} = require("./middleware.js");
+
+const listingcontroller = require("./controllers/listing.js");
+
+const razorpay = require("./utils/Rayzorpay.js");
+const safetyScore = require("./utils/safetyscore.js");
+const revewScore = require("./utils/reviewscore.js");
 const askAgent = require("./agent");
 
-const mongoose=require("mongoose");
-const Listing=require("./models/listing.js")
-const path=require("path");
-const methodOverride=require("method-override")
-const ejsMate=require("ejs-mate");
-const ExpressError=require("./utils/ExpressError")
-const Reviews=require("./models/review.js");
+// ================= DATABASE =================
 
-const flash=require("connect-flash");
-const passport=require("passport");
-const LocalStrategy=require("passport-local");
-const User=require("./models/user.js");
-const {isLoggedIn}=require("./middleware.js")
-const {saveRedirectUrl}=require("./middleware.js")
-const multer  = require('multer')
-const {storage}=require("./cloudConfig.js")
-const upload = multer({ storage })
-const {isOwner,isAuthor}=require("./middleware.js")
-const listingcontroller=require("./controllers/listing.js")
-const session=require("express-session")
-const safetyScore=require("./utils/safetyscore.js")
-const revewScore=require("./utils/reviewscore.js")
-const { RedisStore } = require("connect-redis");
-
-const redisClient =
-  require("./utils/redis");
-
-
-
-// const MONGO_URL="mongodb://127.0.0.1:27017/shestay";
-const dburl=process.env.ATLAS_DB
+const dburl = process.env.ATLAS_DB;
 
 async function main() {
-
-
-  
   await mongoose.connect(dburl);
 }
-main().then(() =>{
-    console.log("connected with db");
 
-}).catch((err)=>{
+main()
+  .then(() => {
+    console.log("Connected to MongoDB");
+  })
+  .catch((err) => {
     console.log(err);
-})
+  });
 
+// ================= SESSION =================
 
-  let sessionOptions = {
+let sessionOptions = {
   secret: process.env.SECRET,
-  resave: false,
-  saveUninitialized: false,
+
+  
+
   cookie: {
     expires: new Date(
       Date.now() + 7 * 24 * 60 * 60 * 1000
     ),
     maxAge: 7 * 24 * 60 * 60 * 1000,
     httpOnly: true,
-    secure: false,
+    secure: false, // true in production with HTTPS
   },
 };
 
@@ -81,68 +86,80 @@ if (redisClient) {
   sessionOptions.store = store;
 }
 
+// ================= VIEW ENGINE =================
 
-// app.get("/",(req,res)=>{
-//     res.send("hello..garima")
-// })
+app.engine("ejs", ejsMate);
+
+app.set("view engine", "ejs");
+app.set("views", path.join(__dirname, "views"));
+
+// ================= MIDDLEWARE =================
+
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
+
+app.use(methodOverride("_method"));
+
+app.use(
+  express.static(
+    path.join(__dirname, "public")
+  )
+);
+
 app.use(session(sessionOptions));
-app.use(flash())
+
+app.use(flash());
+
+// ================= PASSPORT =================
+
 app.use(passport.initialize());
+
 app.use(passport.session());
-passport.use(new LocalStrategy(User.authenticate()));
-passport.serializeUser(User.serializeUser());
-passport.deserializeUser(User.deserializeUser());
-app.use((req,res,next)=>{
-  res.locals.success=req.flash("success");
-  res.locals.error=req.flash("error");
-  res.locals.currUser=req.user;
+
+passport.use(
+  new LocalStrategy(
+    User.authenticate()
+  )
+);
+
+passport.serializeUser( //what to store in session
+  User.serializeUser()
+);
+
+passport.deserializeUser(
+  User.deserializeUser()
+);
+
+// ================= GLOBAL VARIABLES =================
+
+app.use((req, res, next) => {
+  res.locals.success =
+    req.flash("success");
+
+  res.locals.error =
+    req.flash("error");
+
+  res.locals.currUser =
+    req.user;
+
   next();
 });
 
+// ================= SERVER =================
 
-app.set("view engine","ejs");
-app.set("views",path.join(__dirname,"views"))
-app.use(express.urlencoded({extended:true}));
-app.use(methodOverride("_method"));
-app.engine('ejs',ejsMate);
-app.use(express.static(path.join(__dirname,"/public")));
-app.listen(8080,()=>{
-    console.log("server is running on 8080")
+app.listen(8080, () => {
+  console.log(
+    "Server is running on port 8080"
+  );
 });
-// app.get("/testListings", async (req, res) => {
-//   try {
-//     const sampleListing = new Listing({
-//       title: "SheStay Safe Villa",
-//       description: "A peaceful and secure stay for solo women travelers.",
-//       image: "", // triggers default image via setter
-//       price: 1500,
-//       location: "South Delhi",
-//       country: "India",
-//       isWomenOnly: true,
-//       hostGender: "female",
-//       hasSecureLock: true,
-//       emergencySupport: true,
-//       safetyRating: 4.8
-//     });
-
-//     await sampleListing.save();
-//     res.send("Sample SheStay listing created successfully!");
-//   } catch (err) {
-//     console.error("Error saving listing:", err);
-//     res.status(500).send("Failed to create listing.");
-//   }
-// });
-//index route
 app.post("/ai/search", async(req,res)=>{
 
   try{
 
-    console.log("ROUTE HIT");
-
+  
     const { query } = req.body;
 
-    console.log("QUERY:", query);
-
+   
     const answer =
   await askAgent(
     query,
@@ -169,7 +186,7 @@ app.post("/ai/search", async(req,res)=>{
 });
 
 
-app.get("/listings",listingcontroller.index);
+
 
 app.get("/listings", async (req, res) => {
 
@@ -334,18 +351,10 @@ app.get("/listings/:id", async (req, res) => {
   });
 });
 
-// app.get("/demouser",async(req,res)=>{
-//   let fakeUser=new User({
-//     email:"student@gmail.com",
-//     username:"delta-student"
-//   });
-//   let registerUser=await User.register(fakeUser,"helloworld");
-//   res.send(registerUser);
-// })
-//create route
+
 
   
-app.use(express.urlencoded({ extended: true })); // Must come before routes
+
 
 app.post("/listings",isLoggedIn,
   upload.single("listing[image]"), async (req, res, next) => {
@@ -417,10 +426,7 @@ app.delete("/listings/:id",isLoggedIn,
  console.log(deletedlisting);
  res.redirect("/listings");
 })
-// app.all("*",(req,res,next)=>{
-//   next(new ExpressError(404,"page not found"));
-// })
-//reviews
+
 app.post("/listings/:id/reviews",
   isLoggedIn,
   async(req,res)=>{
@@ -444,10 +450,7 @@ app.delete("/listings/:id/reviews/:reviewId",
  res.redirect("/listings")
 
 })
-// app.use((err,req,res,next)=>{
-//   let {statusCode,message}=err;
-//   res.status(statusCode).send(message);
-// })
+
 app.get("/login",(req,res)=>{
   res.render("user/login")
 })
