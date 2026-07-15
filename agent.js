@@ -1,106 +1,259 @@
 
-const ragTool =
-require("./query");
-const bookingTool =
-require("./tools/bookingTool");
+const ragTool = require("./query");
+const ragStream = require("./queryStream");
 
-const searchListings =
-require("./tools/listingTool");
+const bookingTool = require("./tools/bookingTool");
+const searchListings = require("./tools/listingTool");
+const safetyTool = require("./tools/safetyTool");
+const myBookingsTool = require("./tools/myBookingsTool");
 
-const safetyTool =
-require("./tools/safetyTool");
+const resolveBooking = require("./contextResolver");
+const selectTool = require("./toolSelector");
 
-const selectTool =
-require("./toolSelector");
-const myBookingsTool =
-require("./tools/myBookingsTool");
-async function sheStayAgent(
-  query,
-  userId
+// -------------------------
+// NORMAL AGENT
+// -------------------------
+
+async function askAgent(query, userId, history) {
+
+   
+
+    const tool =
+        await selectTool(query);
+
+    console.log("SELECTED TOOL:", tool);
+
+    // ---------------- MONGODB ----------------
+
+    if (tool === "MONGODB") {
+
+        console.log("USING MONGODB TOOL");
+
+        const cityMatch =
+            query.match(/mumbai|delhi|pune|hyderabad/i);
+
+        const city =
+            cityMatch ? cityMatch[0] : "";
+
+        return await searchListings(city);
+
+    }
+
+    // ---------------- SAFETY ----------------
+
+    if (tool === "SAFETY") {
+
+        console.log("USING SAFETY TOOL");
+
+        const cityMatch =
+            query.match(/mumbai|delhi|pune|hyderabad/i);
+
+        const city =
+            cityMatch ? cityMatch[0] : "";
+
+        const budgetMatch =
+            query.match(/\d+/);
+
+        const budget =
+            budgetMatch
+                ? Number(budgetMatch[0])
+                : null;
+
+        return await safetyTool(city, budget);
+
+    }
+
+    // ---------------- BOOKING ----------------
+
+    if (tool === "BOOKING") {
+
+        console.log("USING BOOKING TOOL");
+
+        const property =
+            await resolveBooking(
+                history,
+                query
+            );
+
+        console.log(
+            "RESOLVED PROPERTY:",
+            property
+        );
+
+        return await bookingTool(property);
+
+    }
+
+    // ---------------- MY BOOKINGS ----------------
+
+    if (tool === "MY_BOOKINGS") {
+
+        console.log("USING MY BOOKINGS TOOL");
+
+        return await myBookingsTool(userId);
+
+    }
+
+    // ---------------- RAG ----------------
+
+    return await ragTool(query);
+
+}
+
+// -----------------------------------------------------
+// STREAMING AGENT
+// -----------------------------------------------------
+
+
+
+   async function askAgentStream(
+    query,
+    userId,
+    history,
+    onToken
 ){
 
-  const tool =
-    await selectTool(query,);
 
-  console.log(
-    "SELECTED TOOL:",
-    tool
-  );
+    const tool =
+    await selectTool(query);
 
-  if(tool === "MONGODB"){
+    console.log("SELECTED TOOL:", tool);
+
+    // ---------------- MONGODB ----------------
+
+    if(tool === "MONGODB"){
+
+        console.log("USING MONGODB TOOL");
+
+        const cityMatch =
+        query.match(/mumbai|delhi|pune|hyderabad/i);
+
+        const city =
+        cityMatch ? cityMatch[0] : "";
+
+        const answer =
+        await searchListings(city);
+
+        if(onToken){
+
+            onToken(answer);
+
+        }
+
+        return answer;
+
+    }
+
+    // ---------------- SAFETY ----------------
+
+    if (tool === "SAFETY") {
+
+    console.log("USING SAFETY TOOL");
 
     const cityMatch =
-      query.match(
-        /mumbai|delhi|pune|hyderabad/i
-      );
+        query.match(/mumbai|delhi|pune|hyderabad/i); //i for case sensitive
 
     const city =
-      cityMatch
-      ? cityMatch[0]
-      : "";
+        cityMatch ? cityMatch[0] : "";
 
-    console.log(
-      "USING MONGODB TOOL"
+    const budgetMatch =
+        query.match(/\d+/); //\d+ matches one or more digits
+
+    const budget =
+        budgetMatch
+            ? Number(budgetMatch[0])
+            : null;
+
+    const answer =
+        await safetyTool(city, budget);
+
+    console.log("SAFETY TOOL RETURNED:");
+    console.log(answer);
+
+    if (onToken) {
+        console.log("CALLING onToken()");
+        onToken(answer);
+    }
+
+    console.log("RETURNING FROM SAFETY");
+
+    return answer;
+}
+
+    // ---------------- BOOKING ----------------
+
+    if(tool === "BOOKING"){
+
+        console.log("USING BOOKING TOOL");
+
+        const property =
+        await resolveBooking(
+            history,
+            query
+        );
+        console.log("Resolved Property:");
+console.log(property);
+
+        const answer =
+        await bookingTool(property);
+
+        if(onToken){
+
+            if(typeof answer === "string"){
+
+                onToken(answer);
+
+            }else{
+
+                onToken(JSON.stringify(answer));
+
+            }
+
+        }
+
+        return answer;
+
+    }
+
+    // ---------------- MY BOOKINGS ----------------
+
+    if(tool === "MY_BOOKINGS"){
+
+        console.log("USING MY BOOKINGS TOOL");
+
+        const answer =
+        await myBookingsTool(userId);
+
+        if(onToken){
+
+            onToken(answer);
+
+        }
+
+        return answer;
+
+    }
+
+    // ---------------- RAG STREAM ----------------
+
+    return await ragStream(
+
+        query,
+
+        history,
+
+        onToken
+
     );
 
-    return await searchListings(city);
-
-  }
-
-  if(tool === "SAFETY"){
-
-  console.log("USING SAFETY TOOL");
-
-  const cityMatch =
-    query.match(
-      /mumbai|delhi|pune|hyderabad/i
-    );
-
-  const city =
-    cityMatch
-      ? cityMatch[0]
-      : "";
-
-  const budgetMatch =
-    query.match(/\d+/);
-
-  const budget =
-    budgetMatch
-      ? Number(budgetMatch[0])
-      : null;
-
-  return await safetyTool(
-    city,
-    budget
-  );
-
-}
-if(tool === "BOOKING"){
-
-  console.log(
-    "USING BOOKING TOOL"
-  );
-
-  return await bookingTool(
-    query
-  );
-
 }
 
-if(tool === "MY_BOOKINGS"){
 
-  console.log(
-    "USING MY BOOKINGS TOOL"
-  );
 
-  return await myBookingsTool(
-    userId
-  );
+module.exports = {
 
-}
-  return await ragTool(query);
+    askAgent,
 
-}
+    askAgentStream
 
-module.exports =
-sheStayAgent;
+};

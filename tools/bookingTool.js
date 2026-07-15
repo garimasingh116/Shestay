@@ -5,10 +5,10 @@ async function bookingTool(userQuery){
   const cleanQuery =
     userQuery
       .replace(/book/gi, "")
-      .replace(/reserve/gi, "")
+      .replace(/reserve/gi, "") //global i=case insenitive
       .trim();
 
-  console.log("CLEAN QUERY:", cleanQuery);
+  
 
   const listing =
     await Listing.findOne({

@@ -204,12 +204,9 @@
           required
         >
 
-        <button>
-
-          <i class="fa-solid fa-paper-plane"></i>
-
-        </button>
-
+        <button type="submit">
+    <i class="fa-solid fa-paper-plane"></i>
+</button>
       </div>
 
     </form>
@@ -220,141 +217,179 @@
 
 <script>
 
-  const chatForm =
-    document.getElementById("chat-form");
+let currentConversationId = null;
 
-  const queryInput =
-    document.getElementById("query");
+const chatForm = document.getElementById("chat-form");
+const queryInput = document.getElementById("query");
+const chatContainer = document.getElementById("chat-container");
 
-  const chatContainer =
-    document.getElementById("chat-container");
+function addMessage(message, type){
 
-  // ADD MESSAGE
+    const div = document.createElement("div");
 
-  function addMessage(message, type){
+    div.className = "message " + type;
 
-    const messageDiv =
-      document.createElement("div");
-
-    messageDiv.classList.add(
-      "message",
-      type
-    );
-
-    messageDiv.innerHTML = `
-
-      <div class="bubble">
-        ${message}
-      </div>
-
+    div.innerHTML = `
+        <div class="bubble">${message}</div>
     `;
 
-    chatContainer.appendChild(messageDiv);
+    chatContainer.appendChild(div);
 
-    chatContainer.scrollTop =
-      chatContainer.scrollHeight;
+    chatContainer.scrollTop = chatContainer.scrollHeight;
 
-  }
+}
 
-  // SUGGESTIONS
+document.querySelectorAll(".suggestion").forEach(btn=>{
 
-  const suggestionButtons =
-    document.querySelectorAll(".suggestion");
+    btn.onclick=()=>{
 
-  suggestionButtons.forEach(btn => {
+        queryInput.value=btn.innerText;
 
-    btn.addEventListener("click", () => {
+    };
 
-      queryInput.value =
-        btn.innerText;
+});
 
-    });
-
-  });
-
-  // FORM SUBMIT
-
-  chatForm.addEventListener("submit", async (e) => {
+chatForm.addEventListener("submit", async(e)=>{
 
     e.preventDefault();
 
-    const query =
-      queryInput.value;
+    const query=queryInput.value.trim();
 
-    // USER MESSAGE
+    if(!query) return;
 
-    addMessage(query, "user");
+    addMessage(query,"user");
 
-    queryInput.value = "";
+    queryInput.value="";
 
-    // LOADING
-
-    addMessage("Thinking...", "bot");
+    addMessage("Thinking...","bot");
 
     try{
 
-      const response = await fetch(
-        "/ai/search",
-        {
-          method:"POST",
+        // Create conversation only once
 
-          headers:{
-            "Content-Type":"application/json"
-          },
+        if(!currentConversationId){
 
-          body:JSON.stringify({
-            query
-          })
+            const newChatResponse=
+            await fetch("/ai/new-chat",{
+
+                method:"POST"
+
+            });
+
+            const newChat=
+            await newChatResponse.json();
+
+            currentConversationId=
+            newChat.conversationId;
+
+            console.log(currentConversationId);
+
         }
-      );
+console.log("fecthing");
+        const response=
+        await fetch("/ai/stream",{
 
-      const data =
-        await response.json();
+            method:"POST",
 
-      // REMOVE THINKING
+            headers:{
+                "Content-Type":"application/json"
+            },
 
-      // REMOVE THINKING
+            body:JSON.stringify({
 
-chatContainer.lastChild.remove();
+                query,
 
-// BOOKING ACTION
+                conversationId:currentConversationId
 
-if(
-  typeof data.answer === "object" &&
-  data.answer.action === "BOOK"
-){
+            })
 
-  addMessage(
-    `Opening booking page for ${data.answer.title}...`,
-    "bot"
-  );
+        });
+                  
+        if(!response.ok){
 
-  setTimeout(() => {
+            throw new Error("Request Failed");
 
-    window.location.href =
-      `/listings/${data.answer.listingId}`;
+        }
 
-  }, 1000);
+        // remove Thinking...
+// remove Thinking...
 
-  return;
+chatContainer.lastElementChild.remove();
+
+const messageDiv = document.createElement("div");
+messageDiv.className = "message bot";
+
+const bubble = document.createElement("div");
+bubble.className = "bubble";
+
+messageDiv.appendChild(bubble);
+chatContainer.appendChild(messageDiv);
+
+console.log("Bubble:", bubble);
+
+// ← YOU REMOVED THESE
+const reader = response.body.getReader();
+
+const decoder = new TextDecoder();
+
+let fullAnswer = "";
+
+while (true) {
+
+    console.log("Reading...");
+
+    const { done, value } = await reader.read();
+
+    if (done) {
+        console.log("Stream Finished");
+        break;
+    }
+
+    const chunk = decoder.decode(value);
+
+    console.log("Chunk:", chunk);
+
+    fullAnswer += chunk;
+
+    bubble.textContent = fullAnswer;
+
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+
 }
 
-// NORMAL AI RESPONSE
 
-addMessage(data.answer, "bot");
+
+try {
+
+    const toolResponse = JSON.parse(fullAnswer);
+
+    if (toolResponse.action === "BOOK") {
+
+        bubble.textContent =
+            `Opening booking page for ${toolResponse.title}...`;
+
+        setTimeout(() => {
+
+            window.location.href =
+                `/listings/${toolResponse.listingId}`;
+
+        }, 1000);
 
     }
-    catch(err){
 
-      chatContainer.lastChild.remove();
+} catch (err) {
 
-      addMessage(
-        "Something went wrong.",
-        "bot"
-      );
+    // Normal AI response
+    bubble.textContent = fullAnswer;
 
-    }
+}
 
-  });
+}catch(err){
+
+    addMessage(err.message,"bot");
+
+}
+
+});
 
 </script>

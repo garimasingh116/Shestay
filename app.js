@@ -9,7 +9,15 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 const razorpay=require("./utils/Rayzorpay.js");
 const Booking = require("./models/booking");
-const askAgent = require("./agent");
+const {
+
+    askAgent,
+
+    askAgentStream
+
+} = require("./agent");
+const Conversation =
+require("./models/conversation");
 
 const mongoose=require("mongoose");
 const Listing=require("./models/listing.js")
@@ -82,9 +90,7 @@ if (redisClient) {
 }
 
 
-// app.get("/",(req,res)=>{
-//     res.send("hello..garima")
-// })
+
 app.use(session(sessionOptions));
 app.use(flash())
 app.use(passport.initialize());
@@ -98,8 +104,8 @@ app.use((req,res,next)=>{
   res.locals.currUser=req.user;
   next();
 });
-
-
+const chattingStream =
+require("./queryStream");
 app.set("view engine","ejs");
 app.set("views",path.join(__dirname,"views"))
 app.use(express.urlencoded({extended:true}));
@@ -109,67 +115,246 @@ app.use(express.static(path.join(__dirname,"/public")));
 app.listen(8080,()=>{
     console.log("server is running on 8080")
 });
-// app.get("/testListings", async (req, res) => {
-//   try {
-//     const sampleListing = new Listing({
-//       title: "SheStay Safe Villa",
-//       description: "A peaceful and secure stay for solo women travelers.",
-//       image: "", // triggers default image via setter
-//       price: 1500,
-//       location: "South Delhi",
-//       country: "India",
-//       isWomenOnly: true,
-//       hostGender: "female",
-//       hasSecureLock: true,
-//       emergencySupport: true,
-//       safetyRating: 4.8
-//     });
+app.post("/ai/stream",isLoggedIn, async (req, res) => {
 
-//     await sampleListing.save();
-//     res.send("Sample SheStay listing created successfully!");
-//   } catch (err) {
-//     console.error("Error saving listing:", err);
-//     res.status(500).send("Failed to create listing.");
-//   }
-// });
-//index route
-app.post("/ai/search", async(req,res)=>{
+    try {
+    
+        console.log("STREAM ROUTE HIT");
 
-  try{
+        const {
 
-    console.log("ROUTE HIT");
+            query,
 
-    const { query } = req.body;
+            conversationId
 
-    console.log("QUERY:", query);
+        } = req.body;
 
-    const answer =
-  await askAgent(
-    query,
-    req.user._id
-  );
+        if (!conversationId) {
 
-    console.log("ANSWER:", answer);
+            return res.status(400).json({
+
+                error: "conversationId is required"
+
+            });
+
+        }
+
+        // Load selected conversation
+
+        let conversation =
+            await Conversation.findById(conversationId);
+
+        if (!conversation) {
+
+            return res.status(404).json({
+
+                error: "Conversation not found"
+
+            });
+
+        }
+
+        // Security check
+
+        if (
+            conversation.user.toString() !==
+            req.user._id.toString()
+        ) {
+
+            return res.status(403).json({
+
+                error: "Unauthorized"
+
+            });
+
+        }
+
+        // Save user message
+
+        conversation.messages.push({
+
+            role: "user",
+
+            content: query
+
+        });
+
+        // Streaming headers
+
+        res.setHeader(
+            "Content-Type",
+            "text/plain; charset=utf-8"
+        );
+
+        res.setHeader(
+            "Cache-Control",
+            "no-cache"
+        );
+
+        res.setHeader(
+            "Connection",
+            "keep-alive"
+        );
+
+        res.setHeader(
+            "Transfer-Encoding",
+            "chunked"
+        );
+
+        if (res.flushHeaders) {
+
+            res.flushHeaders();
+
+        }
+
+        let fullAnswer = "";
+       
+
+        const answer = await askAgentStream(
+          
+
+            query,
+
+            req.user._id,
+
+            conversation.messages,
+
+            (token) => {
+               console.log("TOKEN RECEIVED:", token);
+
+                if (!token) return;
+
+                fullAnswer += token;
+                console.log("Writing token to response...");
+
+                res.write(token);
+
+            }
+
+        );
+
+
+        // Non-streaming tools
+
+        if (!fullAnswer && answer) {
+
+            if (typeof answer === "string") {
+
+                fullAnswer = answer;
+
+            } else {
+
+                fullAnswer = JSON.stringify(answer);
+
+            }
+
+            res.write(fullAnswer);
+
+        }
+
+        if (!fullAnswer.trim()) {
+
+            fullAnswer = "No response generated.";
+
+        }
+
+        // Save assistant reply
+
+        conversation.messages.push({
+
+            role: "assistant",
+
+            content: fullAnswer
+
+        });
+
+        await conversation.save();
+        
+
+        res.end();
+
+
+    }
+
+    catch (err) {
+
+        console.log(err);
+
+        res.status(500).end();
+
+    }
+
+});
+app.post("/ai/new-chat",isLoggedIn, async (req, res) => {
+
+    const conversation =
+        await Conversation.create({
+
+            user: req.user._id,
+
+            title: "New Chat",
+
+            messages: []
+
+        });
 
     res.json({
-      answer
+
+        conversationId: conversation._id
+
     });
 
-  }
-  catch(err){
+});
+app.get("/ai/conversations",isLoggedIn, async (req, res) => {
 
-    console.log(err);
+    const conversations =
+        await Conversation.find({
 
-    res.status(500).json({
-      answer:"Backend crashed"
-    });
+            user: req.user._id
 
-  }
+        })
+        .sort({
+            updatedAt: -1
+        })
+        .select("title updatedAt");
+
+    res.json(conversations);
+
+});
+app.get("/ai/conversation/:id",isLoggedIn, async (req, res) => {
+
+    const conversation =
+        await Conversation.findById(req.params.id);
+
+    if (!conversation) {
+
+        return res.status(404).json({
+
+            error: "Conversation not found"
+
+        });
+
+    }
+
+    if (
+        conversation.user.toString() !==
+        req.user._id.toString()
+    ) {
+
+        return res.status(403).json({
+
+            error: "Unauthorized"
+
+        });
+
+    }
+
+    res.json(conversation);
 
 });
 
 
-app.get("/listings",listingcontroller.index);
+//app.get("/listings",listingcontroller.index);
 
 app.get("/listings", async (req, res) => {
 
@@ -334,18 +519,8 @@ app.get("/listings/:id", async (req, res) => {
   });
 });
 
-// app.get("/demouser",async(req,res)=>{
-//   let fakeUser=new User({
-//     email:"student@gmail.com",
-//     username:"delta-student"
-//   });
-//   let registerUser=await User.register(fakeUser,"helloworld");
-//   res.send(registerUser);
-// })
-//create route
 
-  
-app.use(express.urlencoded({ extended: true })); // Must come before routes
+   // Must come before routes
 
 app.post("/listings",isLoggedIn,
   upload.single("listing[image]"), async (req, res, next) => {
@@ -390,10 +565,7 @@ app.put("/listings/:id",isLoggedIn,
   isOwner,
   upload.single("listing[image]"),
   async(req,res)=>{
-    
-    
-
-  let {id}=req.params;
+    let {id}=req.params;
    
  
 
@@ -417,10 +589,7 @@ app.delete("/listings/:id",isLoggedIn,
  console.log(deletedlisting);
  res.redirect("/listings");
 })
-// app.all("*",(req,res,next)=>{
-//   next(new ExpressError(404,"page not found"));
-// })
-//reviews
+
 app.post("/listings/:id/reviews",
   isLoggedIn,
   async(req,res)=>{
@@ -433,7 +602,7 @@ app.post("/listings/:id/reviews",
  await listing.save();
  res.redirect("/listings");
 })
-//delete review
+
 app.delete("/listings/:id/reviews/:reviewId",
   isLoggedIn,
   isAuthor,
@@ -444,10 +613,7 @@ app.delete("/listings/:id/reviews/:reviewId",
  res.redirect("/listings")
 
 })
-// app.use((err,req,res,next)=>{
-//   let {statusCode,message}=err;
-//   res.status(statusCode).send(message);
-// })
+
 app.get("/login",(req,res)=>{
   res.render("user/login")
 })
