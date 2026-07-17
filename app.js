@@ -42,8 +42,7 @@ const upload = multer({ storage })
 const {isOwner,isAuthor}=require("./middleware.js")
 const listingcontroller=require("./controllers/listing.js")
 const session=require("express-session")
-const safetyScore=require("./utils/safetyscore.js")
-const revewScore=require("./utils/reviewscore.js")
+
 const { RedisStore } = require("connect-redis");
 
 const redisClient =

@@ -1,85 +1,63 @@
 const Listing = require("../models/listing");
+const calculateAISafetyScore = require("../utils/aisum.js");
 
-async function safetyTool(city, budget = null){
+async function safetyTool(city, budget = null) {
 
-  let filter = {
-
-    location: {
-      $regex: city,
-      $options: "i"
-    }
-
-  };
-
-  if(budget){
-
-    filter.price = {
-      $lte: budget
+    const filter = {
+        location: {
+            $regex: city,
+            $options: "i"
+        }
     };
 
-  }
-
-  const listings =
-    await Listing.find(filter);
-
-  if(!listings.length){
-
-    return budget
-      ? `No listings found in ${city} under ₹${budget}`
-      : `No listings found in ${city}`;
-
-  }
-
-  let safestListing = null;
-
-  let highestScore = -1;
-
-  for(const listing of listings){
-
-    let score = 0;
-
-    // Main safety score
-    score += (listing.safetyRating || 0) * 3;
-
-    // Security Features
-    if(listing.hasCCTV) score += 2;
-
-    if(listing.security24x7) score += 2;
-
-    if(listing.hasSecureLock) score += 1;
-
-    if(listing.gatedProperty) score += 1;
-
-    // Women-Friendly
-    if(listing.isWomenOnly) score += 2;
-
-    if(listing.femaleStaffAvailable) score += 1;
-
-    if(listing.hostGender === "female") score += 1;
-
-    // Emergency
-    if(listing.emergencySupport) score += 2;
-
-    if(listing.nearbyPoliceStation) score += 1;
-
-    // Night Safety
-    if(listing.lateNightCheckin) score += 1;
-
-    if(listing.nightCabAvailability) score += 1;
-
-    if(listing.wellLitArea) score += 1;
-
-    if(score > highestScore){
-
-      highestScore = score;
-
-      safestListing = listing;
-
+    if (budget) {
+        filter.price = { $lte: budget };
     }
 
-  }
+    const listings = await Listing.find(filter);
 
-  return `
+    if (!listings.length) {
+        return budget
+            ? `No listings found in ${city} under ₹${budget}`
+            : `No listings found in ${city}`;
+    }
+
+    let safestListing = null;
+    let highestScore = -1;
+
+    for (const listing of listings) {
+
+        const score = calculateAISafetyScore(listing);
+
+        if (score > highestScore) {
+            highestScore = score;
+            safestListing = listing;
+        }
+    }
+
+    let recommendation = "";
+
+    if (highestScore >= 90)
+        recommendation =
+            "🌟 AI Recommendation: Excellent choice for solo women travelers.";
+
+    else if (highestScore >= 75)
+        recommendation =
+            "✅ AI Recommendation: Very safe with strong security measures.";
+
+    else if (highestScore >= 60)
+        recommendation =
+            "👍 AI Recommendation: Generally safe. Exercise normal precautions.";
+
+    else if (highestScore >= 45)
+        recommendation =
+            "⚠️ AI Recommendation: Some important safety features are missing.";
+
+    else
+        recommendation =
+            "❌ AI Recommendation: Not recommended for solo women travelers.";
+
+    return `
 🏆 Safest Stay Found
 
 🏡 ${safestListing.title}
@@ -88,23 +66,34 @@ async function safetyTool(city, budget = null){
 
 💰 ₹${safestListing.price}
 
-⭐ Safety Rating: ${safestListing.safetyRating}
+🤖 AI Safety Score: ${highestScore}/100
 
-🔒 CCTV: ${safestListing.hasCCTV ? "Yes" : "No"}
+⭐ User Safety Rating: ${safestListing.safetyRating || "N/A"}/5
 
-🛡️ 24x7 Security: ${safestListing.security24x7 ? "Yes" : "No"}
+🔒 CCTV: ${safestListing.hasCCTV ? "✅" : "❌"}
 
-🚨 Emergency Support: ${safestListing.emergencySupport ? "Yes" : "No"}
+🛡️ 24×7 Security: ${safestListing.security24x7 ? "✅" : "❌"}
 
-👩 Women Only: ${safestListing.isWomenOnly ? "Yes" : "No"}
+🔐 Secure Lock: ${safestListing.hasSecureLock ? "✅" : "❌"}
 
-🌙 Late Night Check-in:
-${safestListing.lateNightCheckin ? "Yes" : "No"}
+🏘️ Gated Property: ${safestListing.gatedProperty ? "✅" : "❌"}
 
-🏅 Safety Score:
-${highestScore}
+🚨 Emergency Support: ${safestListing.emergencySupport ? "✅" : "❌"}
+
+💡 Well-lit Area: ${safestListing.wellLitArea ? "✅" : "❌"}
+
+🚖 Night Cab Available: ${safestListing.cabAvailabilityNight ? "✅" : "❌"}
+
+🌙 Late-night Check-in: ${safestListing.lateNightCheckin ? "✅" : "❌"}
+
+👩 Women Only: ${safestListing.isWomenOnly ? "✅" : "❌"}
+
+👩 Female Staff: ${safestListing.femaleStaffAvailable ? "✅" : "❌"}
+
+👮 Nearby Police Station: ${safestListing.nearbyPoliceStation ? "✅" : "❌"}
+
+${recommendation}
 `;
-
 }
 
 module.exports = safetyTool;
