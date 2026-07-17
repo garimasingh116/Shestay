@@ -1,6 +1,7 @@
 if(process.env.NODE_ENV !== "production"){
   require("dotenv").config();
 }
+const analyzeReview = require("./utils/reviewanalyzer");
 
 console.log(process.env.SECRET)
 const express=require("express");
@@ -18,6 +19,8 @@ const {
 } = require("./agent");
 const Conversation =
 require("./models/conversation");
+const generateAIReviewSummary =
+require("./utils/aisum.js");
 
 const mongoose=require("mongoose");
 const Listing=require("./models/listing.js")
@@ -590,19 +593,55 @@ app.delete("/listings/:id",isLoggedIn,
  res.redirect("/listings");
 })
 
-app.post("/listings/:id/reviews",
+app.post(
+  "/listings/:id/reviews",
   isLoggedIn,
-  async(req,res)=>{
- let listing =await Listing.findById(req.params.id);
- let newReview=new Reviews(req.body.review);
- newReview.author=req.user._id;
- console.log(newReview);
- listing.reviews.push(newReview);
- await newReview.save();
- await listing.save();
- res.redirect("/listings");
-})
+  async (req, res) => {
+    try {
+      console.log("Review submission received:");
+      const listing = await Listing.findById(req.params.id);
 
+      // Analyze the review using AI
+      const ai = await analyzeReview(req.body.review.comment);
+
+      // Create review with AI-generated fields
+      const newReview = new Reviews({
+        comment: req.body.review.comment,
+        rating: req.body.review.rating,
+
+        feltSafe: ai.feltSafe,
+        safeForSoloWomen: ai.safeForSoloWomen,
+
+        hostBehavior: ai.hostBehavior,
+        securityExperience: ai.securityExperience,
+        lateNightExperience: ai.lateNightExperience,
+
+        wouldRecommendToWomen: ai.wouldRecommendToWomen,
+        safetyTags: ai.safetyTags
+      });
+
+      newReview.author = req.user._id;
+
+      listing.reviews.push(newReview);
+
+      await newReview.save();
+      
+     const summary = await generateAIReviewSummary(listing._id);
+
+listing.aiReviewSummary = summary;
+
+await listing.save();
+      if (redisClient) {
+    await redisClient.del(`listing:${listing._id}`);
+}
+
+      res.redirect(`/listings/${listing._id}`);
+    } catch (err) {
+      console.error(err);
+      res.status(500).send("Error analyzing review.");
+    }
+  }
+);
 app.delete("/listings/:id/reviews/:reviewId",
   isLoggedIn,
   isAuthor,

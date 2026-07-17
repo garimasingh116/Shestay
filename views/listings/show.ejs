@@ -166,35 +166,64 @@
         </ul>
 
         <!-- AI SAFETY INSIGHT -->
+<div class="alert alert-info mt-4 shadow-sm">
 
-        <div class="alert alert-info mt-4 shadow-sm">
+    <h5 class="text-primary">
+        🤖 AI Safety Insight
+    </h5>
 
-          <h5 class="text-primary">
-            AI Safety Insight
-          </h5>
+    <% if (listing.aiReviewSummary && listing.aiReviewSummary.summary) { %>
 
-          <% if (
-            listing.security24x7 &&
-            listing.hasCCTV &&
-            listing.lateNightCheckin
-          ) { %>
+        <h6>
+            <strong>
+                <%= listing.aiReviewSummary.overallVerdict %>
+            </strong>
 
-            <p>
-              This property appears suitable for solo women travelers,
-              especially for late-night arrivals, because it offers
-              24/7 security, CCTV monitoring, and late-night check-in.
-            </p>
+            (<%= listing.aiReviewSummary.overallSafetyScore %>/100)
+        </h6>
 
-          <% } else { %>
+        <p>
+            <%= listing.aiReviewSummary.summary %>
+        </p>
 
-            <p>
-              Travelers should carefully review safety features
-              before booking this property.
-            </p>
+        <% if (listing.aiReviewSummary.strengths.length) { %>
 
-          <% } %>
+            <strong>Key Strengths</strong>
 
+            <ul>
+                <% listing.aiReviewSummary.strengths.forEach(function(item){ %>
+                    <li><%= item %></li>
+                <% }) %>
+            </ul>
+
+        <% } %>
+
+        <% if (listing.aiReviewSummary.concerns.length) { %>
+
+            <strong>Potential Concerns</strong>
+
+            <ul>
+                <% listing.aiReviewSummary.concerns.forEach(function(item){ %>
+                    <li><%= item %></li>
+                <% }) %>
+            </ul>
+
+        <% } %>
+
+        <div class="mt-3">
+            <strong>Recommendation:</strong>
+            <%= listing.aiReviewSummary.recommendation %>
         </div>
+
+    <% } else { %>
+
+        <p>
+            AI review summary is not available yet.
+        </p>
+
+    <% } %>
+
+</div>
 
       </div>
     </div>
@@ -272,118 +301,55 @@
         </h4>
 
         <form action="/listings/<%= listing._id %>/reviews" method="POST">
+            <fieldset class="starability-slot">
 
-          <!-- STAR RATING -->
+    <input type="radio" id="first-rate1" name="review[rating]" value="1" />
+    <label for="first-rate1">1 star</label>
 
-          <fieldset class="starability-slot">
+    <input type="radio" id="first-rate2" name="review[rating]" value="2" />
+    <label for="first-rate2">2 stars</label>
 
-            <input type="radio" id="first-rate1" name="review[rating]" value="1" />
-            <label for="first-rate1">1 star</label>
+    <input type="radio" id="first-rate3" name="review[rating]" value="3" />
+    <label for="first-rate3">3 stars</label>
 
-            <input type="radio" id="first-rate2" name="review[rating]" value="2" />
-            <label for="first-rate2">2 stars</label>
+    <input type="radio" id="first-rate4" name="review[rating]" value="4" />
+    <label for="first-rate4">4 stars</label>
 
-            <input type="radio" id="first-rate3" name="review[rating]" value="3" />
-            <label for="first-rate3">3 stars</label>
+    <input type="radio" id="first-rate5" name="review[rating]" value="5" checked />
+    <label for="first-rate5">5 stars</label>
 
-            <input type="radio" id="first-rate4" name="review[rating]" value="4" />
-            <label for="first-rate4">4 stars</label>
+  </fieldset>
 
-            <input type="radio" id="first-rate5" name="review[rating]" value="5" checked />
-            <label for="first-rate5">5 stars</label>
+  <!-- REVIEW -->
 
-          </fieldset>
+  <div class="mb-3">
 
-          <!-- COMMENT -->
+    <label for="comment" class="form-label">
+      Share your experience
+    </label>
 
-          <div class="mb-3">
+    <textarea
+      id="comment"
+      name="review[comment]"
+      class="form-control"
+      rows="6"
+      placeholder="Example: I checked in around 11 PM. The property had CCTV cameras, security guards, and the area was well-lit. The host was friendly and I felt comfortable staying alone."
+      required></textarea>
 
-            <label for="comment" class="form-label">
-              Comment
-            </label>
+    <div class="form-text">
+      Mention your experience about safety, cleanliness, host behaviour,
+      late-night check-in, surrounding area, or anything else.
+      Our AI will automatically analyze your review.
+    </div>
 
-            <textarea
-              name="review[comment]"
-              id="comment"
-              class="form-control"
-              rows="4"
-              required></textarea>
+  </div>
 
-          </div>
+  <button class="btn btn-primary">
+    Submit Review
+  </button>
 
-          <!-- FELT SAFE -->
 
-          <div class="mb-3">
 
-            <label class="form-label">
-              Did you feel safe?
-            </label><br>
-
-            <input
-              type="radio"
-              id="safeYes"
-              name="review[feltSafe]"
-              value="true"
-              checked>
-
-            <label for="safeYes">Yes</label>
-
-            <input
-              type="radio"
-              id="safeNo"
-              name="review[feltSafe]"
-              value="false">
-
-            <label for="safeNo">No</label>
-
-          </div>
-
-          <!-- SOLO WOMEN -->
-
-          <div class="mb-3">
-
-            <label class="form-label">
-              Safe for Solo Women?
-            </label><br>
-
-            <input
-              type="radio"
-              id="soloYes"
-              name="review[safeForSoloWomen]"
-              value="true"
-              checked>
-
-            <label for="soloYes">Yes</label>
-
-            <input
-              type="radio"
-              id="soloNo"
-              name="review[safeForSoloWomen]"
-              value="false">
-
-            <label for="soloNo">No</label>
-
-          </div>
-
-          <!-- LATE NIGHT EXPERIENCE -->
-
-          <div class="mb-3">
-
-            <label class="form-label">
-              Late Night Experience
-            </label>
-
-            <textarea
-              name="review[lateNightExperience]"
-              class="form-control"
-              rows="3"
-              placeholder="Describe your late-night experience"></textarea>
-
-          </div>
-
-          <button class="btn btn-primary">
-            Submit Review
-          </button>
 
         </form>
 

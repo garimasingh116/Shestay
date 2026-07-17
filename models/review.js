@@ -78,7 +78,26 @@ const reviewSchema = new Schema({
   createdAt: {
     type: Date,
     default: Date.now
-  }
+  },
+  // AI GENERATED SAFETY SCORE
+reviewSafetyScore: {
+  type: Number,
+  min: 0,
+  max: 100
+},
+
+// HOW CONFIDENT THE LLM IS
+confidence: {
+  type: Number,
+  min: 0,
+  max: 1
+},
+
+// SHORT AI SUMMARY
+aiSummary: {
+  type: String,
+  trim: true
+}
 
 });
 

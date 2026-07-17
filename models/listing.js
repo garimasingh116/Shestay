@@ -111,7 +111,38 @@ const listingSchema = new schema({
   owner: {
     type: schema.Types.ObjectId,
     ref: "User",
+  },
+  // AI GENERATED REVIEW SUMMARY
+aiReviewSummary: {
+  overallSafetyScore: {
+    type: Number,
+    default: 0
+  },
+
+  overallVerdict: {
+    type: String,
+    default: ""
+  },
+
+  summary: {
+    type: String,
+    default: ""
+  },
+
+  strengths: [String],
+
+  concerns: [String],
+
+  recommendation: {
+    type: String,
+    default: ""
+  },
+
+  updatedAt: {
+    type: Date,
+    default: Date.now
   }
+},
 });
 // schema here ...
 
