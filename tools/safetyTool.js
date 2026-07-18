@@ -26,14 +26,11 @@ async function safetyTool(city, budget = null) {
     let highestScore = -1;
 
     for (const listing of listings) {
-
-        const score = calculateAISafetyScore(listing);
-
-        if (score > highestScore) {
-            highestScore = score;
-            safestListing = listing;
-        }
+    if (listing.aiSafetyScore > highestScore) {
+        highestScore = listing.aiSafetyScore;
+        safestListing = listing;
     }
+}
 
     let recommendation = "";
 

@@ -23,7 +23,7 @@ const listingSchema = new schema({
   location: String,
   country: String,
 
-  // WOMEN-CENTRIC FEATURES
+  
   isWomenOnly: {
     type: Boolean,
     default: false
@@ -39,7 +39,7 @@ const listingSchema = new schema({
     default: false
   },
 
-  // SECURITY
+  
   hasSecureLock: {
     type: Boolean,
     default: true
@@ -92,13 +92,13 @@ const listingSchema = new schema({
     default: false
   },
 
-  // AI SAFETY SCORE
+  
   safetyRating: {
   type: Number,
   default: 0
 },
 
-  // TAGS FOR RAG
+  
   safetyTags: [String],
 
   reviews: [

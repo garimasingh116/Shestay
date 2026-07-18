@@ -27,7 +27,7 @@ const Listing=require("./models/listing.js")
 const path=require("path");
 const methodOverride=require("method-override")
 const ejsMate=require("ejs-mate");
-const ExpressError=require("./utils/ExpressError")
+//const ExpressError=require("./utils/ExpressError")
 const Reviews=require("./models/review.js");
 
 const flash=require("connect-flash");
@@ -356,7 +356,6 @@ app.get("/ai/conversation/:id",isLoggedIn, async (req, res) => {
 });
 
 
-//app.get("/listings",listingcontroller.index);
 
 app.get("/listings", async (req, res) => {
 
@@ -491,38 +490,13 @@ app.get("/listings/:id", async (req, res) => {
     }
   }
 
-  const total = listing.reviews.length;
-
-  let safeCount = 0;
-  let soloCount = 0;
-
-  listing.reviews.forEach((review) => {
-    if (review.feltSafe) safeCount++;
-    if (review.safeForSoloWomen) soloCount++;
-  });
-
-  const safePercent = total
-    ? Math.round((safeCount / total) * 100)
-    : 0;
-
-  const soloPercent = total
-    ? Math.round((soloCount / total) * 100)
-    : 0;
-
-  const reviewScore = Math.round(
-    (safePercent + soloPercent) / 2
-  );
-
   res.render("listings/show", {
-    listing,
-    reviewScore,
-    safePercent,
-    soloPercent,
+    listing
   });
 });
 
 
-   // Must come before routes
+  
 
 app.post("/listings",isLoggedIn,
   upload.single("listing[image]"), async (req, res, next) => {
@@ -600,10 +574,10 @@ app.post(
       console.log("Review submission received:");
       const listing = await Listing.findById(req.params.id);
 
-      // Analyze the review using AI
+      
       const ai = await analyzeReview(req.body.review.comment);
 
-      // Create review with AI-generated fields
+      
       const newReview = new Reviews({
         comment: req.body.review.comment,
         rating: req.body.review.rating,

@@ -76,7 +76,7 @@ ${reviews}
   });
 
   const result = JSON.parse(
-    completion.choices[0].message.content
+    completion.choices[0].message.content //ai will return in string we will convert it into json object
   );
 
   result.updatedAt = new Date();

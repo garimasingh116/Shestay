@@ -86,19 +86,6 @@
 
   <strong>AI Safety Score:</strong>
 
-  <div class="progress mt-2">
-
-    <div
-      class="progress-bar bg-success"
-      role="progressbar"
-      style="width:<%= listing.safetyRating %>%"
-    >
-
-      <%= listing.safetyRating %>/100
-
-    </div>
-
-  </div>
 
   <% if(listing.safetyRating >= 80){ %>
 
@@ -358,29 +345,13 @@
     </div>
 
     <hr>
-    <div class="alert alert-success mt-4">
+    
 
-  <h5>
-    🤖 AI Review Safety Score
-  </h5>
 
-  <h3>
-    <%= reviewScore %>/100
-  </h3>
+  
 
-  <p>
+  
 
-    <strong><%= safePercent %>%</strong>
-    of guests felt safe.
-
-  </p>
-
-  <p>
-
-    <strong><%= soloPercent %>%</strong>
-    recommend this property for solo women travelers.
-
-  </p>
 
 </div>
 

@@ -165,11 +165,7 @@ async function askAgent(query, userId, history) {
             : null;
 
     const answer =
-        await safetyTool(city, budget);
-
-    console.log("SAFETY TOOL RETURNED:");
-    console.log(answer);
-
+    await safetyTool(city, budget);
     if (onToken) {
         console.log("CALLING onToken()");
         onToken(answer);
