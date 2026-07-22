@@ -1,5 +1,5 @@
 
-const ragTool = require("./query");
+
 const ragStream = require("./queryStream");
 
 const bookingTool = require("./tools/bookingTool");
@@ -10,95 +10,7 @@ const myBookingsTool = require("./tools/myBookingsTool");
 const resolveBooking = require("./contextResolver");
 const selectTool = require("./toolSelector");
 
-// -------------------------
-// NORMAL AGENT
-// -------------------------
 
-async function askAgent(query, userId, history) {
-
-   
-
-    const tool =
-        await selectTool(query);
-
-    console.log("SELECTED TOOL:", tool);
-
-    // ---------------- MONGODB ----------------
-
-    if (tool === "MONGODB") {
-
-        console.log("USING MONGODB TOOL");
-
-        const cityMatch =
-            query.match(/mumbai|delhi|pune|hyderabad/i);
-
-        const city =
-            cityMatch ? cityMatch[0] : "";
-
-        return await searchListings(city);
-
-    }
-
-    // ---------------- SAFETY ----------------
-
-    if (tool === "SAFETY") {
-
-        console.log("USING SAFETY TOOL");
-
-        const cityMatch =
-            query.match(/mumbai|delhi|pune|hyderabad/i);
-
-        const city =
-            cityMatch ? cityMatch[0] : "";
-
-        const budgetMatch =
-            query.match(/\d+/);
-
-        const budget =
-            budgetMatch
-                ? Number(budgetMatch[0])
-                : null;
-
-        return await safetyTool(city, budget);
-
-    }
-
-    // ---------------- BOOKING ----------------
-
-    if (tool === "BOOKING") {
-
-        console.log("USING BOOKING TOOL");
-
-        const property =
-            await resolveBooking(
-                history,
-                query
-            );
-
-        console.log(
-            "RESOLVED PROPERTY:",
-            property
-        );
-
-        return await bookingTool(property);
-
-    }
-
-    // ---------------- MY BOOKINGS ----------------
-
-    if (tool === "MY_BOOKINGS") {
-
-        console.log("USING MY BOOKINGS TOOL");
-
-        return await myBookingsTool(userId);
-
-    }
-
-    // ---------------- RAG ----------------
-
-    return await ragTool(query);
-
-}
 
 // -----------------------------------------------------
 // STREAMING AGENT
@@ -248,7 +160,7 @@ console.log(property);
 
 module.exports = {
 
-    askAgent,
+    
 
     askAgentStream
 

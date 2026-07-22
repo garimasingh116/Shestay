@@ -12,7 +12,6 @@ const razorpay=require("./utils/Rayzorpay.js");
 const Booking = require("./models/booking");
 const {
 
-    askAgent,
 
     askAgentStream
 
@@ -27,7 +26,7 @@ const Listing=require("./models/listing.js")
 const path=require("path");
 const methodOverride=require("method-override")
 const ejsMate=require("ejs-mate");
-//const ExpressError=require("./utils/ExpressError")
+
 const Reviews=require("./models/review.js");
 
 const flash=require("connect-flash");
@@ -501,7 +500,7 @@ app.get("/listings/:id", async (req, res) => {
 app.post("/listings",isLoggedIn,
   upload.single("listing[image]"), async (req, res, next) => {
   try {
-     // ← for debugging
+     
     console.log("BODY RECEIVED:", req.body);
     let url=req.file.path;
     let filename=req.file.filename;
@@ -553,6 +552,7 @@ let url=req.file.path;
 listing.image={url,filename}
 
 await listing.save();
+  await redisClient.del(`listing:${id}`);
 }
  res.redirect(`/listings/${id}`);
 })
@@ -561,6 +561,7 @@ app.delete("/listings/:id",isLoggedIn,
   isOwner,async(req,res)=>{
   let {id}=req.params;
  let deletedlisting=await Listing.findByIdAndDelete(id);
+ await redisClient.del(`listing:${id}`);
  req.flash("success"," listing deleted!")
  console.log(deletedlisting);
  res.redirect("/listings");
@@ -622,6 +623,7 @@ app.delete("/listings/:id/reviews/:reviewId",
   let{id,reviewId}=req.params;
   await Listing.findByIdAndUpdate(id,{$pull:{reviews:reviewId}})
  await Reviews.findByIdAndDelete(reviewId);
+ await redisClient.del(`listing:${id}`);
  res.redirect("/listings")
 
 })
