@@ -158,7 +158,7 @@ app.post("/ai/stream",isLoggedIn, async (req, res) => {
         // Security check
 
         if (
-            conversation.user.toString() !==
+            conversation.user.toString() !== //mongodb objectid
             req.user._id.toString()
         ) {
 
@@ -289,7 +289,7 @@ app.post("/ai/stream",isLoggedIn, async (req, res) => {
 app.post("/ai/new-chat",isLoggedIn, async (req, res) => {
 
     const conversation =
-        await Conversation.create({
+        await Conversation.create({ //await javascript waits until the promise is resolved and then returns the value of the promise
 
             user: req.user._id,
 

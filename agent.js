@@ -64,6 +64,7 @@ const selectTool = require("./toolSelector");
 
     const cityMatch =
         query.match(/mumbai|delhi|pune|hyderabad/i); //i for case sensitive
+        //citymatch return an array of matches, if no match return null
 
     const city =
         cityMatch ? cityMatch[0] : "";

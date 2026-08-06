@@ -7,6 +7,6 @@ const userSchema=new Schema({
         required:true
     }
 })
-userSchema.plugin(passportLocalMongoose);
+userSchema.plugin(passportLocalMongoose); //plugin modify the schema by adding methods and feilds
 
 module.exports = mongoose.model('User', userSchema);

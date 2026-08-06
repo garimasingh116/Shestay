@@ -124,7 +124,7 @@ MY_BOOKINGS
     .choices[0]
     .message
     .content
-    .trim();
+    .trim(); //choice is an array contai ony one element
 
 }
 

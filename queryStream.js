@@ -43,8 +43,8 @@ async function chattingStream(question, history = [], onToken) {
 
     const pineconeIndex =
       pinecone
-      .Index(process.env.PINECONE_INDEX_NAME)
-      .namespace("default");
+      .   Index(process.env.PINECONE_INDEX_NAME) //index is table
+       .namespace("default"); //folder  inside the sam eindex
 
     const searchResults =
       await pineconeIndex.query({
@@ -152,7 +152,7 @@ ${context}
 
       fullAnswer += token;
 
-      process.stdout.write(token);
+      //process.stdout.write(token); //for terminal
 
       if(onToken){
 
