@@ -87,7 +87,7 @@ async function chattingStream(question, history = [], onToken) {
     const stream =
       await groq.chat.completions.create({
 
-        model:"llama-3.1-8b-instant",
+        model: "llama-3.3-70b-versatile",
 
         stream:true,
 

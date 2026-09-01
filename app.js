@@ -2,8 +2,6 @@ if(process.env.NODE_ENV !== "production"){
   require("dotenv").config();
 }
 const analyzeReview = require("./utils/reviewanalyzer");
-
-console.log(process.env.SECRET)
 const express=require("express");
 const app=express();
 app.use(express.urlencoded({ extended: true }));
@@ -39,7 +37,7 @@ const multer  = require('multer')
 const {storage}=require("./cloudConfig.js")
 const upload = multer({ storage })
 const {isOwner,isAuthor}=require("./middleware.js")
-const listingcontroller=require("./controllers/listing.js")
+
 const session=require("express-session")
 
 const { RedisStore } = require("connect-redis");
@@ -68,15 +66,15 @@ main().then(() =>{
 
   let sessionOptions = {
   secret: process.env.SECRET,
-  resave: false,
-  saveUninitialized: false,
+  resave: false, //do not save the session in session id if nothing has chnaged
+  saveUninitialized: false, //For example, a user visits your website but hasn't logged in or stored anything in their session.
   cookie: {
     expires: new Date(
       Date.now() + 7 * 24 * 60 * 60 * 1000
     ),
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-    httpOnly: true,
-    secure: false,
+   
+    httpOnly: true, //Prevents browser JavaScript from accessing the cookie.
+    
   },
 };
 
@@ -85,25 +83,27 @@ if (redisClient) {
     client: redisClient,
     prefix: "shestay:",
     ttl: 86400,
-  });
+  }); //rediscclient->redisstore->use that particular client to store session data in redis, prefix is used to identify the session data in redis, ttl is time to live for the session data in seconds
+  //redisclient is connection between redisstore and redis client
 
   sessionOptions.store = store;
 }
+//redisClient is the object that knows how to communicate with Redis.
 
 
 
-app.use(session(sessionOptions));
+app.use(session(sessionOptions));//user login->session created ->session id in browser and session infoo in redis
 app.use(flash())
-app.use(passport.initialize());
-app.use(passport.session());
+app.use(passport.initialize()); //initialize the passport
+app.use(passport.session());//use the express session
 passport.use(new LocalStrategy(User.authenticate()));
-passport.serializeUser(User.serializeUser());
-passport.deserializeUser(User.deserializeUser());
+passport.serializeUser(User.serializeUser());  //store the id
+passport.deserializeUser(User.deserializeUser());//get the id and find the user in db
 app.use((req,res,next)=>{
   res.locals.success=req.flash("success");
   res.locals.error=req.flash("error");
   res.locals.currUser=req.user;
-  next();
+  next(); //res.locals contains variables that are available to the views rendered during that request.
 });
 const chattingStream =
 require("./queryStream");
@@ -356,8 +356,48 @@ app.get("/ai/conversation/:id",isLoggedIn, async (req, res) => {
 
 
 
-app.get("/listings", async (req, res) => {
+// app.get("/listings", async (req, res) => {
 
+//   let filter = {};
+
+//   if (req.query.womenOnly) {
+//     filter.isWomenOnly = true;
+//   }
+
+//   if (req.query.femaleHost) {
+//     filter.hostGender = "female";
+//   }
+
+//   if (req.query.cctv) {
+//     filter.hasCCTV = true;
+//   }
+
+//   if (req.query.security24x7) {
+//     filter.security24x7 = true;
+//   }
+
+//   if (req.query.lateNightCheckin) {
+//     filter.lateNightCheckin = true;
+//   }
+
+//   if (req.query.wellLitArea) {
+//     filter.wellLitArea = true;
+//   }
+
+//   if (req.query.safetyRating) {
+//     filter.safetyRating = {
+//       $gte: Number(req.query.safetyRating)
+//     };
+//   }
+
+//   const allListing = await Listing.find(filter);
+
+//   res.render("listings/index", {
+//     allListing
+//   });
+
+// });
+ app.get("/listings", async (req, res) => {
   let filter = {};
 
   if (req.query.womenOnly) {
@@ -390,14 +430,42 @@ app.get("/listings", async (req, res) => {
     };
   }
 
-  const allListing = await Listing.find(filter);
+  // Create a unique key for each filter combination
+  const cacheKey = `listings:${JSON.stringify(filter)}`;
+
+  let cachedData = null;
+
+  if (redisClient) {
+    cachedData = await redisClient.get(cacheKey);
+  }
+
+  let allListing;
+
+  if (cachedData) {
+    console.log("FROM REDIS");
+
+    allListing = JSON.parse(cachedData);
+
+  } else {
+    console.log("FROM MONGODB");
+
+    allListing = await Listing.find(filter);
+
+    if (redisClient) {
+      await redisClient.set(
+        cacheKey,
+        JSON.stringify(allListing),
+        {
+          EX: 300
+        }
+      );
+    }
+  }
 
   res.render("listings/index", {
     allListing
   });
-
 });
-
 app.get("/signup",(req,res)=>{
   res.render("user/signup");
 })
@@ -544,7 +612,8 @@ app.put("/listings/:id",isLoggedIn,
    
  
 
-let listing= await Listing.findByIdAndUpdate(id,{...req.body.listing});
+// let listing= await Listing.findByIdAndUpdate(id,{...req.body.listing});//spread operator generally used for 
+ let listing = await Listing.findByIdAndUpdate(id, req.body.listing);
 if(typeof req.file!=="undefined"){
 let url=req.file.path;
     let filename=req.file.filename;
@@ -621,7 +690,7 @@ app.delete("/listings/:id/reviews/:reviewId",
   isAuthor,
   async(req,res)=>{
   let{id,reviewId}=req.params;
-  await Listing.findByIdAndUpdate(id,{$pull:{reviews:reviewId}})
+ await Listing.findByIdAndUpdate(id,{$pull:{reviews:reviewId}})
  await Reviews.findByIdAndDelete(reviewId);
  await redisClient.del(`listing:${id}`);
  res.redirect("/listings")

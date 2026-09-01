@@ -14,24 +14,34 @@ async function safetyTool(city, budget = null) {
         filter.price = { $lte: budget };
     }
 
-    const listings = await Listing.find(filter);
+   const listings = await Listing.find(filter);
 
-    if (!listings.length) {
-        return budget
-            ? `No listings found in ${city} under ₹${budget}`
-            : `No listings found in ${city}`;
-    }
+if (!listings.length) {
+    return budget
+        ? `No listings found in ${city} under ₹${budget}`
+        : `No listings found in ${city}`;
+}
+let safestListing = null;
+let highestScore = -1;
 
-    let safestListing = null;
-    let highestScore = -1;
+for (const listing of listings) {
 
-    for (const listing of listings) {
-    if (listing.aiSafetyScore > highestScore) {
-        highestScore = listing.aiSafetyScore;
+    const score = calculateAISafetyScore(listing);
+
+    console.log(
+        listing.title,
+        "AI Safety Score:",
+        score
+    );
+
+    if (score > highestScore) {
+        highestScore = score;
         safestListing = listing;
     }
 }
-
+if (!safestListing) {
+    return "Listings were found, but no AI safety scores are available.";
+}
     let recommendation = "";
 
     if (highestScore >= 90)
