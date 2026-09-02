@@ -47,30 +47,33 @@ async function chattingStream(question, history = [], onToken) {
        .namespace("default"); //folder  inside the sam eindex
 
     const searchResults =
-      await pineconeIndex.query({
+    await pineconeIndex.query({
+        topK: 8,
+        vector: queryVector,
+        includeMetadata: true
+    });
 
-        topK:8,
+console.log(
+    "Retrieved:",
+    searchResults.matches.length,
+    "chunks"
+);
 
-        vector:queryVector,
+console.log("========== RETRIEVED CONTEXT ==========");
 
-        includeMetadata:true
+searchResults.matches.forEach((match, index) => {
+    console.log(`\n--- CHUNK ${index + 1} ---`);
+    console.log(match.metadata?.text);
+});
 
-      });
+console.log("========================================");
 
-    console.log(
-      "Retrieved:",
-      searchResults.matches.length,
-      "chunks"
-    );
-
-    const context =
-      searchResults.matches
-      .map(match=>match.metadata.text)
-      .join("\n\n-----------------\n\n");
-
-    // REMOVE CURRENT USER MESSAGE
-    // because we'll append it again below
-
+const context =
+    searchResults.matches
+        .map(match => match.metadata?.text)
+        .filter(Boolean)
+        .join("\n\n-----------------\n\n");
+        
     const previousMessages =
       history
       .filter(m=>m.role!=="user" || m.content!==question)
@@ -87,7 +90,7 @@ async function chattingStream(question, history = [], onToken) {
     const stream =
       await groq.chat.completions.create({
 
-        model: "llama-3.3-70b-versatile",
+       model: "openai/gpt-oss-20b",
 
         stream:true,
 
