@@ -37,6 +37,10 @@ Analyze the review and return ONLY valid JSON.
 
 Do not explain anything.
 Return JSON only.
+for host behavior ans from hostBehavior: {
+    type: String,
+    enum: ["excellent", "good", "average", "poor"]
+  },
 `
             },
             {

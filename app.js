@@ -46,15 +46,12 @@ const redisClient =
   require("./utils/redis");
 
 
-
+//express session does everything after authentication passport set req.user to user
 // const MONGO_URL="mongodb://127.0.0.1:27017/shestay";
 const dburl=process.env.ATLAS_DB
 
 async function main() {
-
-
-  
-  await mongoose.connect(dburl);
+ await mongoose.connect(dburl);
 }
 main().then(() =>{
     console.log("connected with db");
@@ -216,7 +213,7 @@ app.post("/ai/stream",isLoggedIn, async (req, res) => {
 
             query,
 
-            req.user._id,
+            req.user._id, //after authentication passport acttaches user to req.user
 
             conversation.messages,
 
@@ -354,49 +351,6 @@ app.get("/ai/conversation/:id",isLoggedIn, async (req, res) => {
 
 });
 
-
-
-// app.get("/listings", async (req, res) => {
-
-//   let filter = {};
-
-//   if (req.query.womenOnly) {
-//     filter.isWomenOnly = true;
-//   }
-
-//   if (req.query.femaleHost) {
-//     filter.hostGender = "female";
-//   }
-
-//   if (req.query.cctv) {
-//     filter.hasCCTV = true;
-//   }
-
-//   if (req.query.security24x7) {
-//     filter.security24x7 = true;
-//   }
-
-//   if (req.query.lateNightCheckin) {
-//     filter.lateNightCheckin = true;
-//   }
-
-//   if (req.query.wellLitArea) {
-//     filter.wellLitArea = true;
-//   }
-
-//   if (req.query.safetyRating) {
-//     filter.safetyRating = {
-//       $gte: Number(req.query.safetyRating)
-//     };
-//   }
-
-//   const allListing = await Listing.find(filter);
-
-//   res.render("listings/index", {
-//     allListing
-//   });
-
-// });
  app.get("/listings", async (req, res) => {
   let filter = {};
 
@@ -483,7 +437,8 @@ app.post("/signup",async(req,res,next)=>{
  res.redirect("/listings");
  })
  
-  }catch(e){
+  }
+  catch(e){
     req.flash("error",e.message);
     res.redirect("/signup");
 
@@ -612,10 +567,10 @@ app.put("/listings/:id",isLoggedIn,
    
  
 
-// let listing= await Listing.findByIdAndUpdate(id,{...req.body.listing});//spread operator generally used for 
+// let listing= await Listing.findByIdAndUpdate(id,{...req.body.listing});//spread operator generally used for add
  let listing = await Listing.findByIdAndUpdate(id, req.body.listing);
 if(typeof req.file!=="undefined"){
-let url=req.file.path;
+let url=req.file.path; 
     let filename=req.file.filename;
     
 listing.image={url,filename}
@@ -671,7 +626,7 @@ app.post(
       
      const summary = await generateAIReviewSummary(listing._id);
 
-listing.aiReviewSummary = summary;
+    listing.aiReviewSummary = summary;
 
 await listing.save();
       if (redisClient) {
