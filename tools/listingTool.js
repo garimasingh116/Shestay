@@ -1,31 +1,32 @@
-const Listing =
-require("../models/listing");
 
-async function searchListings(city){
+const Listing = require("../models/listing");
 
-  const listings =
-    await Listing.find({
-      location:{
-        $regex:city,
-        $options:"i"
-      }
-    });
+async function searchListings(city, budget = null) {
+  const filter = {
+    location: { $regex: city, $options: "i" }
+  };
 
-  if(!listings.length){
-
-    return `No listings found in ${city}`;
-
+  if (budget != null) {
+    filter.price = { $lte: budget };
   }
 
-  return listings.map(listing => (
+  console.log("LISTING FILTER:", filter);
 
-    `🏡 ${listing.title}
-📍 ${listing.location}
-⭐ Safety Rating: ${listing.safetyRating}`
+  const listings = await Listing.find(filter).lean();
 
-  )).join("\n\n");
+  if (!listings.length) {
+    return `No listings found in ${city}${
+      budget != null ? ` under ₹${budget}` : ""
+    }`;
+  }
 
+  return listings.map(listing => ({
+    id: listing._id.toString(),
+    title: listing.title,
+    location: listing.location,
+    price: listing.price,
+    safetyRating: listing.safetyRating
+  }));
 }
 
-module.exports =
-searchListings;
+module.exports = searchListings;

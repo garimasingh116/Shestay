@@ -1,48 +1,32 @@
+
 const Listing = require("../models/listing");
 
-async function bookingTool(userQuery){
-
-  const cleanQuery =
-    userQuery
-      .replace(/book/gi, "")
-      .replace(/reserve/gi, "") //global i=case insenitive
-      .trim();
-
-  
-
-  const listing =
-    await Listing.findOne({
-      title: {
-        $regex: cleanQuery, //pattern matching
-        $options: "i"
-      }
-    });
-
-  console.log("MATCHED LISTING:", listing);
-
-  if(!listing){
-
+async function bookingTool({ listingId }) {
+  if (!listingId) {
     return {
       success: false,
-      message: "Property not found"
+      message: "A listing ID is required."
     };
+  }
 
+  const listing = await Listing.findById(listingId).lean();
+
+  if (!listing) {
+    return {
+      success: false,
+      message: "Property not found."
+    };
   }
 
   return {
-
     success: true,
-
     action: "BOOK",
-
-    listingId: listing._id.toString(),
-
-    title: listing.title,
-
-    price: listing.price
-
+    listing: {
+      id: listing._id.toString(),
+      title: listing.title,
+      price: listing.price
+    }
   };
-
 }
 
 module.exports = bookingTool;

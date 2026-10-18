@@ -1,4 +1,5 @@
 
+
 const Groq = require("groq-sdk");
 
 const groq = new Groq({
@@ -6,252 +7,204 @@ const groq = new Groq({
 });
 
 async function selectTool(userQuery) {
-
   const query = userQuery.toLowerCase().trim();
 
   // =====================================================
-  // 1. MY BOOKINGS
+  // 1. COMPLEX QUERIES: USE THE MULTI-TOOL PLANNER
+  // =====================================================
+
+  const complexPatterns = [
+    /\bcompare\b/,
+    /\band then\b/,
+    /\bafter that\b/,
+    /\bboth\b/,
+    /\bfind\b.*\band\b.*\b(safest|safety|secure|book|compare)\b/,
+    /\b(show|find|list)\b.*\band\b.*\b(safest|safety|secure|rating)\b/,
+    /\b(safest|safety|secure)\b.*\band\b.*\b(book|reserve|compare)\b/,
+    /\b(book|reserve)\b.*\band\b.*\b(safest|safety|secure)\b/,
+    /\bunder\b.*\band\b.*\b(safest|safety|secure)\b/,
+  ];
+
+  if (complexPatterns.some(pattern => pattern.test(query))) {
+    console.log("RULE ROUTER: PLANNER");
+    return "PLANNER";
+  }
+
+  // =====================================================
+  // 2. MY BOOKINGS
   // =====================================================
 
   if (
-    query.includes("my booking") ||
-    query.includes("my bookings") ||
-    query.includes("booking history") ||
-    query.includes("my reservations") ||
-    query.includes("upcoming booking") ||
-    query.includes("upcoming bookings") ||
-    query.includes("what have i booked") ||
-    query.includes("what did i book") ||
-    query.includes("booked properties")
+    /\bmy bookings?\b/.test(query) ||
+    /\bbooking history\b/.test(query) ||
+    /\bmy reservations?\b/.test(query) ||
+    /\bupcoming bookings?\b/.test(query) ||
+    /\bwhat have i booked\b/.test(query) ||
+    /\bwhat did i book\b/.test(query) ||
+    /\bbooked properties\b/.test(query) ||
+    /\bshow my bookings?\b/.test(query)
   ) {
+    console.log("RULE ROUTER: MY_BOOKINGS");
     return "MY_BOOKINGS";
   }
 
-
   // =====================================================
-  // 2. BOOKING
+  // 3. BOOKING
   // =====================================================
 
   if (
-    query.includes("book this") ||
-    query.includes("book it") ||
-    query.includes("book a") ||
-    query.includes("book the") ||
-    query.includes("reserve it") ||
-    query.includes("reserve this") ||
-    query.includes("make a reservation") ||
-    query.includes("confirm my booking") ||
-    query.includes("i want to stay here") ||
-    query.includes("i want to book") ||
-    query.includes("i want to reserve")
+    /\bbook this\b/.test(query) ||
+    /\bbook it\b/.test(query) ||
+    /\bbook a\b/.test(query) ||
+    /\bbook the\b/.test(query) ||
+    /\breserve it\b/.test(query) ||
+    /\breserve this\b/.test(query) ||
+    /\bmake a reservation\b/.test(query) ||
+    /\bconfirm my booking\b/.test(query) ||
+    /\bi want to stay here\b/.test(query) ||
+    /\bi want to book\b/.test(query) ||
+    /\bi want to reserve\b/.test(query)
   ) {
+    console.log("RULE ROUTER: BOOKING");
     return "BOOKING";
   }
 
-
   // =====================================================
-  // 3. SAFETY
+  // 4. SAFETY
   // =====================================================
 
   if (
-    query.includes("safest") ||
-    query.includes("most safe") ||
-    query.includes("most secure") ||
-    query.includes("highest safety") ||
-    query.includes("highest safety rating") ||
-    query.includes("best safety rating") ||
-    query.includes("securest") ||
-    query.includes("safety rating") ||
-    query.includes("safe accommodation") ||
-    query.includes("safe stay") ||
-    query.includes("secure accommodation") ||
-    query.includes("secure stay")
+    /\bsafest\b/.test(query) ||
+    /\bmost safe\b/.test(query) ||
+    /\bmost secure\b/.test(query) ||
+    /\bhighest safety\b/.test(query) ||
+    /\bbest safety rating\b/.test(query) ||
+    /\bsecurest\b/.test(query) ||
+    /\bsafety rating\b/.test(query) ||
+    /\bsafe accommodation\b/.test(query) ||
+    /\bsafe stay\b/.test(query) ||
+    /\bsecure accommodation\b/.test(query) ||
+    /\bsecure stay\b/.test(query)
   ) {
+    console.log("RULE ROUTER: SAFETY");
     return "SAFETY";
   }
 
-
   // =====================================================
-  // 4. MONGODB
+  // 5. MONGODB
   // =====================================================
 
   if (
-    query.includes("show") ||
-    query.includes("list") ||
-    query.includes("find") ||
-    query.includes("stay") ||
-    query.includes("stays") ||
-    query.includes("property") ||
-    query.includes("properties") ||
-    query.includes("accommodation") ||
-    query.includes("accommodations") ||
-    query.includes("hotel") ||
-    query.includes("hotels") ||
-    query.includes("villa") ||
-    query.includes("villas") ||
-    query.includes("listing") ||
-    query.includes("listings") ||
-    query.includes("how many") ||
-    query.includes("count") ||
-    query.includes("available stays") ||
-    query.includes("available properties")
+    /\bshow\b/.test(query) ||
+    /\blist\b/.test(query) ||
+    /\bfind\b/.test(query) ||
+    /\bstays?\b/.test(query) ||
+    /\bproperties\b/.test(query) ||
+    /\bproperty\b/.test(query) ||
+    /\baccommodations?\b/.test(query) ||
+    /\bhotels?\b/.test(query) ||
+    /\bvillas?\b/.test(query) ||
+    /\blistings?\b/.test(query) ||
+    /\bhow many\b/.test(query) ||
+    /\bcount\b/.test(query) ||
+    /\bavailable properties\b/.test(query)
   ) {
+    console.log("RULE ROUTER: MONGODB");
     return "MONGODB";
   }
 
-
   // =====================================================
-  // 5. LLM FALLBACK
+  // 6. LLM FALLBACK
   // =====================================================
 
-  const response =
-    await groq.chat.completions.create({
-
+  try {
+    const response = await groq.chat.completions.create({
       model: "openai/gpt-oss-20b",
-
+      temperature: 0,
       messages: [
-
         {
           role: "system",
-
           content: `
-You are an intelligent routing agent for a
-accommodation booking platform.
+You are the initial routing agent for SheStay.
 
-Choose exactly ONE backend tool.
+Choose exactly ONE route.
 
-AVAILABLE TOOLS:
+Available routes:
 
-1. MONGODB
+MONGODB:
+Search, list, filter, or count accommodation listings.
 
-Use when the user wants to retrieve, search, list,
-filter, count, or find accommodation listings.
+SAFETY:
+Find or rank accommodations specifically by safety.
 
+BOOKING:
+The user wants to initiate a booking.
+
+MY_BOOKINGS:
+Retrieve the current user's existing bookings.
+
+RAG:
+General questions, explanations, travel advice,
+amenities, and questions answerable using retrieved knowledge.
+
+PLANNER:
+The query requires multiple tools or multiple dependent steps.
 Examples:
-- show stays in Mumbai
-- show properties in Delhi
-- find villas in Hyderabad
-- list accommodations
-- how many stays are in Hyderabad?
-- count hotels in Mumbai
-- properties under 3000
-- women-only stays
-- stays with CCTV
+- Find stays and compare their safety.
+- Find a property, then evaluate its safety.
+- Compare accommodations using listing and safety data.
+- Find the safest stay under a budget.
+- Find options and then help initiate a booking.
 
-
-2. RAG
-
-Use when the user wants:
-- recommendations
-- explanations
-- comparisons
-- travel advice
-- general information
-- information about a particular property
-
-Examples:
-- recommend a stay
-- which stay is better?
-- compare these properties
-- explain the safety features
-- what amenities are available?
-- tell me about Sapphire Nest Retreat
-- give me travel advice
-
-
-3. SAFETY
-
-Use ONLY when the user specifically wants
-accommodation selected or ranked based on safety.
-
-Examples:
-- safest stay
-- safest hotel
-- safest villa
-- safest stay in Hyderabad
-- most secure property
-- highest safety rating
-- safest accommodation near airport
-
-
-4. BOOKING
-
-Use when the user wants to create a booking.
-
-Examples:
-- book this stay
-- reserve it
-- book Sapphire Nest Retreat
-- I want to stay here
-- confirm my booking
-- make a reservation
-
-
-5. MY_BOOKINGS
-
-Use when the user wants information about
-their existing bookings.
-
-Examples:
-- my bookings
-- booking history
-- what have I booked?
-- upcoming stays
-- booked properties
-- show my reservations
-
-
-IMPORTANT RULES:
-
-- Return ONLY one tool name.
-- Never explain your choice.
-- Never return anything else.
+Rules:
+- Return only one route name.
+- Do not explain your choice.
+- If multiple tools are needed, return PLANNER.
+- Do not return PLANNER for a simple query.
+- Never assume a booking has been confirmed.
 
 Valid outputs:
-
 MONGODB
-RAG
 SAFETY
 BOOKING
 MY_BOOKINGS
+RAG
+PLANNER
 `
         },
-
         {
           role: "user",
           content: userQuery
         }
-
       ]
-
     });
 
+    const route = response.choices[0].message.content
+      .trim()
+      .replace(/^["'\s]+|["'\s]+$/g, "")
+      .toUpperCase();
 
-  const tool =
-    response.choices[0].message.content.trim();
+    const validRoutes = [
+      "MONGODB",
+      "SAFETY",
+      "BOOKING",
+      "MY_BOOKINGS",
+      "RAG",
+      "PLANNER"
+    ];
 
-  console.log("LLM ROUTER RESULT:", tool);
+    if (validRoutes.includes(route)) {
+      console.log("LLM ROUTER RESULT:", route);
+      return route;
+    }
 
-  // =====================================================
-  // 6. SAFETY CHECK
-  // =====================================================
+    console.warn("Unexpected router output:", route);
+    return "RAG";
 
-  const validTools = [
-    "MONGODB",
-    "RAG",
-    "SAFETY",
-    "BOOKING",
-    "MY_BOOKINGS"
-  ];
-
-  if (validTools.includes(tool)) {
-    return tool;
+  } catch (error) {
+    console.error("Tool selector error:", error.message);
+    return "RAG";
   }
-
-  // If LLM returns something unexpected
-  return "RAG";
 }
 
-
 module.exports = selectTool;
-

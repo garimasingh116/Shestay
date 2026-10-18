@@ -18,6 +18,16 @@ module.exports.saveRedirectUrl = (req, res, next) => {
   }
   next();
 };
+module.exports.isLoggedInForAPI = (req, res, next) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({
+      error: "You must be logged in"
+    });
+  }
+  console.log("User is authenticated for API:", req.user);
+
+  next();
+};
 
 module.exports.isOwner = async (req, res, next) => {
   const { id } = req.params;

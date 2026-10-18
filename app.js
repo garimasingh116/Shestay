@@ -14,6 +14,7 @@ const {
     askAgentStream
 
 } = require("./agent");
+const { isLoggedInForAPI } = require("./middleware.js");
 const Conversation =
 require("./models/conversation");
 const generateAIReviewSummary =
@@ -113,7 +114,7 @@ app.use(express.static(path.join(__dirname,"/public")));
 app.listen(8080,()=>{
     console.log("server is running on 8080")
 });
-app.post("/ai/stream",isLoggedIn, async (req, res) => {
+app.post("/ai/stream",isLoggedInForAPI, async (req, res) => {
 
     try {
     
@@ -283,7 +284,7 @@ app.post("/ai/stream",isLoggedIn, async (req, res) => {
     }
 
 });
-app.post("/ai/new-chat",isLoggedIn, async (req, res) => {
+app.post("/ai/new-chat",isLoggedInForAPI, async (req, res) => {
 
     const conversation =
         await Conversation.create({ //await javascript waits until the promise is resolved and then returns the value of the promise

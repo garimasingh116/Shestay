@@ -100,44 +100,31 @@ async function safetyTool(city, budget = null) {
             "❌ AI Recommendation: Not recommended for solo women travelers.";
     }
 
-    return `
-🏆 Safest Stay Found
+return {
+  success: true,
+  safestListing: {
+    id: safestListing._id.toString(),
+    title: safestListing.title,
+    location: safestListing.location,
+    price: safestListing.price,
+    safetyRating: safestListing.safetyRating,
+    aiSafetyScore: highestScore,
+    verdict: safestAIResult.overallVerdict,
+    features: {
+      hasCCTV: safestListing.hasCCTV,
+      security24x7: safestListing.security24x7,
+      hasSecureLock: safestListing.hasSecureLock,
+      gatedProperty: safestListing.gatedProperty,
+      emergencySupport: safestListing.emergencySupport,
+      wellLitArea: safestListing.wellLitArea,
+      lateNightCheckin: safestListing.lateNightCheckin,
+      isWomenOnly: safestListing.isWomenOnly,
+      femaleStaffAvailable:
+        safestListing.femaleStaffAvailable
+    },
+    recommendation
+  }
+};
 
-🏡 ${safestListing.title}
-
-📍 ${safestListing.location}
-
-💰 ₹${safestListing.price}
-
-🤖 AI Safety Score: ${highestScore}/100
-
-⭐ User Safety Rating: ${safestListing.safetyRating || "N/A"}/5
-
-🔒 CCTV: ${safestListing.hasCCTV ? "✅" : "❌"}
-
-🛡️ 24×7 Security: ${safestListing.security24x7 ? "✅" : "❌"}
-
-🔐 Secure Lock: ${safestListing.hasSecureLock ? "✅" : "❌"}
-
-🏘️ Gated Property: ${safestListing.gatedProperty ? "✅" : "❌"}
-
-🚨 Emergency Support: ${safestListing.emergencySupport ? "✅" : "❌"}
-
-💡 Well-lit Area: ${safestListing.wellLitArea ? "✅" : "❌"}
-
-🚖 Night Cab Available: ${safestListing.cabAvailabilityNight ? "✅" : "❌"}
-
-🌙 Late-night Check-in: ${safestListing.lateNightCheckin ? "✅" : "❌"}
-
-👩 Women Only: ${safestListing.isWomenOnly ? "✅" : "❌"}
-
-👩 Female Staff: ${safestListing.femaleStaffAvailable ? "✅" : "❌"}
-
-👮 Nearby Police Station: ${safestListing.nearbyPoliceStation ? "✅" : "❌"}
-
-${recommendation}
-`;
 }
-
 module.exports = safetyTool;
-
